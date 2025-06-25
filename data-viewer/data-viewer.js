@@ -383,6 +383,13 @@ class TwitterDataViewer {
     const tweetText = card.querySelector(".tweet-text");
     tweetText.innerHTML = this.processTextLinks(tweet.full_text);
 
+    // Media content
+    const tweetMedia = card.querySelector(".tweet-media");
+    if (tweet.has_media && tweet.media_info && tweet.media_info.length > 0) {
+      this.renderTweetMedia(tweetMedia, tweet.media_info, tweet);
+      tweetMedia.style.display = "block";
+    }
+
     // Tweet stats
     const repliesCount = card.querySelector(".replies");
     const retweetsCount = card.querySelector(".retweets");
@@ -413,6 +420,251 @@ class TwitterDataViewer {
     });
 
     return card;
+  }
+
+  renderTweetMedia(mediaContainer, mediaInfo, tweet) {
+    // Clear any existing media content
+    mediaContainer.innerHTML = "";
+    
+    const mediaCount = mediaInfo.length;
+    
+    // Add appropriate CSS class based on media count
+    mediaContainer.classList.remove("single-media", "two-media", "three-media", "four-media");
+    if (mediaCount === 1) {
+      mediaContainer.classList.add("single-media");
+    } else if (mediaCount === 2) {
+      mediaContainer.classList.add("two-media");
+    } else if (mediaCount === 3) {
+      mediaContainer.classList.add("three-media");
+    } else if (mediaCount >= 4) {
+      mediaContainer.classList.add("four-media");
+    }
+
+    mediaInfo.forEach((media, index) => {
+      // Only show first 4 media items to prevent UI issues
+      if (index >= 4) return;
+      
+      const mediaItem = document.createElement("div");
+      mediaItem.className = "media-item";
+      
+      try {
+        if (media.type === "photo") {
+          this.createImageElement(mediaItem, media, tweet);
+        } else if (media.type === "video") {
+          this.createVideoElement(mediaItem, media, tweet);
+        } else if (media.type === "animated_gif") {
+          this.createGifElement(mediaItem, media, tweet);
+        }
+        
+        mediaContainer.appendChild(mediaItem);
+      } catch (error) {
+        console.error("Error creating media element:", error);
+        this.createErrorMediaElement(mediaItem, "Failed to load media");
+        mediaContainer.appendChild(mediaItem);
+      }
+    });
+  }
+
+  createImageElement(mediaItem, media, tweet) {
+    const img = document.createElement("img");
+    img.src = media.media_url || media.preview_url;
+    img.alt = this.generateAltText(tweet.full_text);
+    img.loading = "lazy";
+    img.style.cursor = "pointer";
+    
+    // Add click handler for full-size view
+    img.addEventListener("click", () => {
+      this.openMediaModal(media.media_url || media.preview_url, "image");
+    });
+    
+    // Handle image load errors
+    img.addEventListener("error", () => {
+      this.createErrorMediaElement(mediaItem, "Image failed to load");
+    });
+    
+    mediaItem.appendChild(img);
+  }
+
+  createVideoElement(mediaItem, media, tweet) {
+    const video = document.createElement("video");
+    video.controls = true;
+    video.preload = "metadata";
+    video.poster = media.preview_url;
+    
+    if (media.width && media.height) {
+      video.setAttribute("width", media.width);
+      video.setAttribute("height", media.height);
+    }
+    
+    // Create source element
+    const source = document.createElement("source");
+    source.src = media.media_url;
+    source.type = "video/mp4";
+    video.appendChild(source);
+    
+    // Add type indicator
+    const typeIndicator = document.createElement("div");
+    typeIndicator.className = "media-type-indicator video";
+    typeIndicator.textContent = "VIDEO";
+    mediaItem.appendChild(typeIndicator);
+    
+    // Add duration badge if available
+    if (media.duration_ms) {
+      const durationBadge = document.createElement("div");
+      durationBadge.className = "media-duration";
+      durationBadge.textContent = this.formatDuration(media.duration_ms);
+      mediaItem.appendChild(durationBadge);
+    }
+    
+    // Handle video errors
+    video.addEventListener("error", () => {
+      this.createErrorMediaElement(mediaItem, "Video failed to load");
+    });
+    
+    mediaItem.appendChild(video);
+  }
+
+  createGifElement(mediaItem, media, tweet) {
+    const video = document.createElement("video");
+    video.autoplay = true;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.controls = false;
+    video.poster = media.preview_url;
+    
+    // Make it behave like a clickable GIF
+    video.style.cursor = "pointer";
+    mediaItem.classList.add("gif");
+    
+    if (media.width && media.height) {
+      video.setAttribute("width", media.width);
+      video.setAttribute("height", media.height);
+    }
+    
+    // Create source element
+    const source = document.createElement("source");
+    source.src = media.media_url;
+    source.type = "video/mp4";
+    video.appendChild(source);
+    
+    // Add type indicator
+    const typeIndicator = document.createElement("div");
+    typeIndicator.className = "media-type-indicator gif";
+    typeIndicator.textContent = "GIF";
+    mediaItem.appendChild(typeIndicator);
+    
+    // Handle video errors
+    video.addEventListener("error", () => {
+      this.createErrorMediaElement(mediaItem, "GIF failed to load");
+    });
+    
+    // Toggle play/pause on click
+    video.addEventListener("click", () => {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
+    
+    mediaItem.appendChild(video);
+  }
+
+  createErrorMediaElement(mediaItem, errorMessage) {
+    mediaItem.innerHTML = "";
+    mediaItem.classList.add("error");
+    
+    const errorIcon = document.createElement("div");
+    errorIcon.className = "media-error-icon";
+    errorIcon.textContent = "⚠️";
+    
+    const errorText = document.createElement("div");
+    errorText.className = "media-error-text";
+    errorText.textContent = errorMessage;
+    
+    mediaItem.appendChild(errorIcon);
+    mediaItem.appendChild(errorText);
+  }
+
+  generateAltText(tweetText) {
+    if (!tweetText) return "Tweet media";
+    
+    // Truncate tweet text for alt attribute
+    const cleanText = tweetText.replace(/https?:\/\/[^\s]+/g, "").trim();
+    return cleanText.length > 100 
+      ? cleanText.substring(0, 97) + "..." 
+      : cleanText || "Tweet media";
+  }
+
+  formatDuration(durationMs) {
+    const seconds = Math.floor(durationMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (minutes > 0) {
+      return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+    } else {
+      return `0:${remainingSeconds.toString().padStart(2, "0")}`;
+    }
+  }
+
+  openMediaModal(mediaUrl, mediaType) {
+    // Create modal if it doesn't exist
+    let modal = document.querySelector(".media-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.className = "media-modal";
+      
+      const modalContent = document.createElement("div");
+      modalContent.className = "media-modal-content";
+      
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "media-modal-close";
+      closeBtn.innerHTML = "&times;";
+      closeBtn.addEventListener("click", () => {
+        modal.classList.remove("active");
+      });
+      
+      modalContent.appendChild(closeBtn);
+      modal.appendChild(modalContent);
+      document.body.appendChild(modal);
+      
+      // Close on background click
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.classList.remove("active");
+        }
+      });
+      
+      // Close on escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("active")) {
+          modal.classList.remove("active");
+        }
+      });
+    }
+    
+    const modalContent = modal.querySelector(".media-modal-content");
+    const existingMedia = modalContent.querySelector("img, video");
+    if (existingMedia) {
+      existingMedia.remove();
+    }
+    
+    // Create media element
+    let mediaElement;
+    if (mediaType === "image") {
+      mediaElement = document.createElement("img");
+      mediaElement.src = mediaUrl;
+      mediaElement.alt = "Full size image";
+    } else {
+      mediaElement = document.createElement("video");
+      mediaElement.controls = true;
+      mediaElement.src = mediaUrl;
+    }
+    
+    modalContent.appendChild(mediaElement);
+    modal.classList.add("active");
   }
 
   showEmptyState() {

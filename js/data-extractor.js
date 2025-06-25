@@ -490,23 +490,69 @@ class TwitterDataExtractor {
     );
   }
 
-  // Extract media information
+  // Extract media information with enhanced video handling
   extractMediaInfo(legacy) {
     try {
       if (!legacy) return [];
 
+      // Prefer extended_entities.media but fall back to entities.media when needed
       const media =
         legacy.extended_entities?.media || legacy.entities?.media || [];
 
-      return media.map((item) => ({
-        id: item?.id_str || "",
-        type: item?.type || "unknown", // photo, video, animated_gif
-        url: item?.url || "",
-        media_url: item?.media_url_https || item?.media_url || "",
-        display_url: item?.display_url || "",
-        expanded_url: item?.expanded_url || "",
-        sizes: item?.sizes || {},
-      }));
+      if (media.length === 0) return [];
+
+      return media.map((item) => {
+        const mediaInfo = {
+          id: item?.id_str || "",
+          type: item?.type || "unknown", // photo, video, animated_gif
+          preview_url: item?.media_url_https || item?.media_url || "",
+          media_url: item?.media_url_https || item?.media_url || "",
+          width: item?.original_info?.width || item?.sizes?.large?.w || 0,
+          height: item?.original_info?.height || item?.sizes?.large?.h || 0,
+        };
+
+        // Handle video and animated_gif specific data
+        if (item?.type === "video" || item?.type === "animated_gif") {
+          // Extract duration
+          if (item?.video_info?.duration_millis) {
+            mediaInfo.duration_ms = item.video_info.duration_millis;
+          }
+
+          // Extract and process variants
+          if (item?.video_info?.variants) {
+            const allVariants = item.video_info.variants.map(variant => ({
+              bitrate: variant.bitrate || 0,
+              url: variant.url || "",
+              content_type: variant.content_type || ""
+            }));
+
+            mediaInfo.variants = allVariants;
+
+            // Filter to MP4 variants only
+            const mp4Variants = allVariants.filter(
+              variant => variant.content_type === "video/mp4"
+            );
+
+            if (mp4Variants.length > 0) {
+              // Sort by bitrate (treat undefined as 0)
+              mp4Variants.sort((a, b) => (a.bitrate || 0) - (b.bitrate || 0));
+
+              // Choose middle quality variant (or highest if only one)
+              let chosenVariant;
+              if (mp4Variants.length === 1) {
+                chosenVariant = mp4Variants[0];
+              } else {
+                const middleIndex = Math.floor(mp4Variants.length / 2);
+                chosenVariant = mp4Variants[middleIndex];
+              }
+
+              mediaInfo.media_url = chosenVariant.url;
+            }
+          }
+        }
+
+        return mediaInfo;
+      });
     } catch (error) {
       console.error("Error extracting media info:", error);
       return [];
