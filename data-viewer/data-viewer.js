@@ -20,6 +20,9 @@ class TwitterDataViewer {
     console.log("Initializing Twitter Data Viewer");
 
     try {
+      // Debug IndexedDB immediately when page loads
+      await this.debugDataViewerDB();
+
       // Set up event listeners
       this.setupEventListeners();
 
@@ -30,6 +33,38 @@ class TwitterDataViewer {
     } catch (error) {
       console.error("Error initializing data viewer:", error);
       this.showError("Failed to initialize data viewer");
+    }
+  }
+
+  async debugDataViewerDB() {
+    console.log("=== Data Viewer IndexedDB Debug ===");
+    console.log("Page URL:", window.location.href);
+    console.log("Page origin:", window.location.origin);
+
+    try {
+      const databases = await indexedDB.databases();
+      console.log("Available databases:", databases);
+
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open("TwitterCollector", 1);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+        request.onupgradeneeded = () =>
+          reject(new Error("DB doesn't exist"));
+      });
+
+      const count = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(["tweets"], "readonly");
+        const store = transaction.objectStore("tweets");
+        const request = store.count();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+
+      console.log("Tweet count in data viewer context:", count);
+      db.close();
+    } catch (error) {
+      console.error("Data viewer DB debug error:", error);
     }
   }
 
@@ -844,8 +879,8 @@ class TwitterDataViewer {
               if (chrome.runtime.lastError) {
                 // Communication with BG failed – fallback to direct DB access
                 console.warn(
-                  "BG deletion failed, falling back to direct DB",
-                  chrome.runtime.lastError
+                  "BG deletion failed, falling back to direct DB:",
+                  chrome.runtime.lastError.message
                 );
                 resolve(null);
               } else {
@@ -909,8 +944,8 @@ class TwitterDataViewer {
           chrome.runtime.sendMessage({ type: "clearAllData" }, (res) => {
             if (chrome.runtime.lastError) {
               console.warn(
-                "BG clearAllData failed, falling back",
-                chrome.runtime.lastError
+                "BG clearAllData failed, falling back:",
+                chrome.runtime.lastError.message
               );
               resolve(null);
             } else {
