@@ -157,6 +157,16 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Decode HTML entities to readable text
+function decodeHtmlEntities(text) {
+  if (!text) return "";
+
+  // Create a temporary element to decode HTML entities safely
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 // Format numbers (e.g., 1234 -> 1.2K)
 function formatNumber(num) {
   if (!num || isNaN(num)) return "0";
@@ -242,6 +252,7 @@ if (typeof module !== "undefined" && module.exports) {
     debounce,
     throttle,
     escapeHtml,
+    decodeHtmlEntities,
     formatNumber,
     isExtensionContext,
     safeJSONParse,

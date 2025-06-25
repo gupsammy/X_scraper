@@ -349,13 +349,22 @@ class TwitterDataViewer {
 
     // Author info
     const authorAvatar = card.querySelector(".author-avatar");
+    const authorAvatarLink = card.querySelector(".author-avatar-link");
     const authorName = card.querySelector(".author-name");
+    const authorNameLink = card.querySelector(".author-name-link");
     const authorHandle = card.querySelector(".author-handle");
     const verifiedBadge = card.querySelector(".verified-badge");
 
+    const authorProfileUrl = `https://x.com/${
+      tweet.author_screen_name || "unknown"
+    }`;
+
     authorAvatar.src = tweet.author_profile_image_url || "../icons/icon48.png";
     authorAvatar.alt = tweet.author_name || "Unknown";
+    authorAvatarLink.href = authorProfileUrl;
+
     authorName.textContent = tweet.author_name || "Unknown User";
+    authorNameLink.href = authorProfileUrl;
     authorHandle.textContent = `@${tweet.author_screen_name || "unknown"}`;
 
     if (tweet.author_verified) {
@@ -372,7 +381,7 @@ class TwitterDataViewer {
 
     // Tweet content
     const tweetText = card.querySelector(".tweet-text");
-    tweetText.textContent = tweet.full_text;
+    tweetText.innerHTML = this.processTextLinks(tweet.full_text);
 
     // Tweet stats
     const repliesCount = card.querySelector(".replies");
@@ -673,6 +682,52 @@ class TwitterDataViewer {
       return (num / 1000).toFixed(1) + "K";
     }
     return num.toString();
+  }
+
+  // Helper function to decode HTML entities
+  decodeHtmlEntities(text) {
+    if (!text) return "";
+
+    // Create a temporary element to decode HTML entities safely
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = text;
+    return textarea.value;
+  }
+
+  processTextLinks(text) {
+    if (!text) return "";
+
+    // First decode any existing HTML entities to get the actual text
+    let processedText = this.decodeHtmlEntities(text);
+
+    // Now escape HTML to prevent XSS, but only what needs to be escaped
+    processedText = processedText
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+    // Note: We don't encode single quotes since they're not dangerous in this context
+    // and users expect to see them as regular apostrophes
+
+    // Process URLs - match http/https URLs
+    processedText = processedText.replace(
+      /(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank">$1</a>'
+    );
+
+    // Process @mentions
+    processedText = processedText.replace(
+      /@([a-zA-Z0-9_]+)/g,
+      '<a href="https://x.com/$1" target="_blank" class="mention">@$1</a>'
+    );
+
+    // Process hashtags (optional enhancement)
+    processedText = processedText.replace(
+      /#([a-zA-Z0-9_]+)/g,
+      '<a href="https://x.com/hashtag/$1" target="_blank" class="hashtag">#$1</a>'
+    );
+
+    return processedText;
   }
 
   debounce(func, wait) {
