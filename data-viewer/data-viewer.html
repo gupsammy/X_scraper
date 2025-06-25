@@ -11,10 +11,45 @@
       <!-- Header -->
       <header class="header">
         <div class="header-content">
-          <img src="../icons/icon48.png" alt="Twitter Collector" class="logo" />
-          <h1>Captured Tweets</h1>
-          <div class="header-stats">
-            <span id="total-displayed">0</span> tweets displayed
+          <div class="header-left">
+            <img
+              src="../icons/icon48.png"
+              alt="Twitter Collector"
+              class="logo"
+            />
+            <h1>Captured Tweets</h1>
+            <div class="header-stats">
+              <span id="total-displayed">0</span> tweets displayed
+            </div>
+          </div>
+          <div class="header-actions">
+            <button id="export-all-data" class="header-btn export">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path
+                  fill="currentColor"
+                  d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
+                />
+              </svg>
+              Export All
+            </button>
+            <button id="import-data" class="header-btn import">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path
+                  fill="currentColor"
+                  d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,11L16,15H13V19H11V15H8L12,11Z"
+                />
+              </svg>
+              Import
+            </button>
+            <button id="clear-all-data" class="header-btn delete">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path
+                  fill="currentColor"
+                  d="M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19M8,9H16V19H8V9M15.5,4L14.5,3H9.5L8.5,4H5V6H19V4H15.5Z"
+                />
+              </svg>
+              Clear All
+            </button>
           </div>
         </div>
       </header>
@@ -94,13 +129,6 @@
       <footer class="footer">
         <div class="footer-content">
           <p>&copy; 2024 Twitter Collector Extension</p>
-          <div class="footer-links">
-            <a href="#" id="clear-all-data">Clear All Data</a>
-            <span>•</span>
-            <a href="#" id="export-all-data">Export All</a>
-            <span>•</span>
-            <a href="#" id="import-data">Import Data</a>
-          </div>
         </div>
       </footer>
     </div>
@@ -109,34 +137,65 @@
     <template id="tweet-card-template">
       <div class="tweet-card">
         <div class="tweet-header">
-          <div class="author-info">
-            <a class="author-avatar-link" href="#" target="_blank">
-              <img class="author-avatar" src="" alt="" loading="lazy" />
-            </a>
-            <div class="author-details">
-              <div class="author-name-row">
-                <a class="author-name-link" href="#" target="_blank">
-                  <span class="author-name"></span>
-                </a>
-                <svg
-                  class="verified-badge"
-                  style="display: none"
-                  viewBox="0 0 24 24"
-                  width="16"
-                  height="16"
-                >
-                  <path
-                    fill="#1d9bf0"
-                    d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.27 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"
-                  />
-                </svg>
+          <div class="tweet-header-main">
+            <div class="author-info">
+              <a class="author-avatar-link" href="#" target="_blank">
+                <img class="author-avatar" src="" alt="" loading="lazy" />
+              </a>
+              <div class="author-details">
+                <div class="author-name-row">
+                  <a class="author-name-link" href="#" target="_blank">
+                    <span class="author-name"></span>
+                  </a>
+                  <svg
+                    class="verified-badge"
+                    style="display: none"
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                  >
+                    <path
+                      fill="#1d9bf0"
+                      d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.27 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"
+                    />
+                  </svg>
+                  <span class="tweet-date"></span>
+                  <span class="source-badge"></span>
+                </div>
+                <span class="author-handle"></span>
               </div>
-              <span class="author-handle"></span>
             </div>
           </div>
-          <div class="tweet-meta">
-            <span class="tweet-date"></span>
-            <span class="source-badge"></span>
+          <div class="tweet-actions">
+            <a
+              class="action-btn view-original"
+              href="#"
+              target="_blank"
+              title="View Original Tweet"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path
+                  fill="#1DA1F2"
+                  d="M8.46 18a.75.75 0 0 1-.53-.22L4.22 14.07a.75.75 0 0 1 0-1.06L7.93 9.3a.75.75 0 1 1 1.06 1.06L6.06 13.5l2.93 2.93a.75.75 0 0 1-.53 1.28zm6.19 0a.75.75 0 0 1-.53-1.28L16.94 13.5l-2.93-2.93a.75.75 0 1 1 1.06-1.06l3.71 3.71a.75.75 0 0 1 0 1.06l-3.71 3.71a.75.75 0 0 1-.53.22z"
+                />
+              </svg>
+            </a>
+            <button class="action-btn copy-link" title="Copy Tweet Link">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path
+                  fill="#10B981"
+                  d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
+                />
+              </svg>
+            </button>
+            <button class="action-btn delete-tweet" title="Delete Tweet">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path
+                  fill="#EF4444"
+                  d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -163,21 +222,6 @@
             <span class="stat-icon">📊</span>
             <span class="stat-count views">0</span>
           </div>
-        </div>
-
-        <div class="tweet-actions">
-          <a class="action-link view-original" href="#" target="_blank">
-            <span class="action-icon">🔗</span>
-            View Original
-          </a>
-          <button class="action-btn copy-link">
-            <span class="action-icon">📋</span>
-            Copy Link
-          </button>
-          <button class="action-btn delete-tweet">
-            <span class="action-icon">🗑️</span>
-            Delete
-          </button>
         </div>
       </div>
     </template>

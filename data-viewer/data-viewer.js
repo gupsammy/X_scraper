@@ -401,11 +401,14 @@ class TwitterDataViewer {
 
     viewOriginalLink.href = tweet.tweet_url;
 
-    copyLinkBtn.addEventListener("click", () => {
+    copyLinkBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       this.copyToClipboard(tweet.tweet_url);
+      this.showToast("Tweet link copied to clipboard!");
     });
 
-    deleteTweetBtn.addEventListener("click", () => {
+    deleteTweetBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       this.deleteTweet(tweet.id);
     });
 

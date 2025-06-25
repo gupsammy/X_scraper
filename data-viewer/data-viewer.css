@@ -36,18 +36,22 @@ body {
   justify-content: space-between;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .logo {
   width: 32px;
   height: 32px;
-  margin-right: 12px;
   border-radius: 6px;
 }
 
 .header h1 {
   font-size: 24px;
   font-weight: 600;
-  display: flex;
-  align-items: center;
+  margin: 0;
 }
 
 .header-stats {
@@ -56,6 +60,49 @@ body {
   background: rgba(255, 255, 255, 0.2);
   padding: 8px 12px;
   border-radius: 20px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.header-btn.export:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.header-btn.import:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.header-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 /* Controls Section */
@@ -207,7 +254,7 @@ body {
   background: white;
   border: 1px solid #e1e8ed;
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px 20px;
   margin-bottom: 16px;
   transition: all 0.2s ease;
   position: relative;
@@ -224,6 +271,14 @@ body {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 12px;
+  gap: 12px;
+}
+
+.tweet-header-main {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
 }
 
 .author-info {
@@ -266,8 +321,9 @@ body {
 .author-name-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0;
   margin-bottom: 2px;
+  flex-wrap: wrap;
 }
 
 .author-name-link {
@@ -289,7 +345,7 @@ body {
 .verified-badge {
   flex-shrink: 0;
   filter: drop-shadow(0 1px 2px rgba(29, 161, 242, 0.3));
-  margin-left: 2px;
+  margin-left: 8px;
 }
 
 .author-handle {
@@ -297,16 +353,25 @@ body {
   font-size: 14px;
 }
 
+/* Remove old tweet-meta styles */
 .tweet-meta {
-  text-align: right;
-  font-size: 12px;
+  display: none;
+}
+
+.tweet-date::before {
+  content: "·";
+  margin-left: 8px;
+  margin-right: 8px;
   color: #536471;
 }
 
 .tweet-date {
-  display: block;
-  margin-bottom: 4px;
+  font-size: 12px;
+  color: #536471;
+  margin-left: 0;
 }
+
+/* Consistent spacing - the dot in ::before already provides separation */
 
 .source-badge {
   background: #e1e8ed;
@@ -316,6 +381,7 @@ body {
   font-size: 10px;
   text-transform: uppercase;
   font-weight: 600;
+  margin-left: 8px;
 }
 
 .source-badge.bookmarks {
@@ -335,7 +401,7 @@ body {
 
 /* Tweet Content */
 .tweet-content {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .tweet-text {
@@ -399,10 +465,8 @@ body {
 .tweet-stats {
   display: flex;
   gap: 20px;
-  margin-bottom: 12px;
-  padding: 8px 0;
+  padding: 8px 0 0 0;
   border-top: 1px solid #f1f3f4;
-  border-bottom: 1px solid #f1f3f4;
 }
 
 .stat-item {
@@ -414,54 +478,70 @@ body {
 }
 
 .stat-icon {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .stat-count {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* Tweet Actions */
 .tweet-actions {
   display: flex;
-  gap: 12px;
-  align-items: center;
+  gap: 6px;
+  align-items: flex-start;
+  flex-shrink: 0;
 }
 
-.action-link,
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-  text-decoration: none;
-  border: none;
-  background: #f7f9fa;
-  color: #536471;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #e1e8ed;
+  border-radius: 6px;
+  background: #f8fafc;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-decoration: none;
 }
 
-.action-link:hover,
 .action-btn:hover {
-  background: #e1e8ed;
-  color: #14171a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.action-link.view-original:hover {
-  background: #e3f2fd;
-  color: #1976d2;
+.action-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.action-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.action-btn.view-original:hover {
+  background: rgba(29, 161, 242, 0.1);
+  border-color: #1da1f2;
+}
+
+.action-btn.copy-link:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
 }
 
 .action-btn.delete-tweet:hover {
-  background: #ffebee;
-  color: #d32f2f;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+/* Remove old action styles */
+.action-link {
+  display: none;
 }
 
 .action-icon {
-  font-size: 10px;
+  display: none;
 }
 
 /* Pagination */
@@ -574,9 +654,39 @@ body {
     flex-wrap: wrap;
   }
 
-  .tweet-actions {
+  .header-content {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .header-left {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .header-actions {
+    justify-content: center;
     flex-wrap: wrap;
+  }
+
+  .header-btn {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .tweet-header {
+    flex-direction: column;
     gap: 8px;
+  }
+
+  .tweet-header-main {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tweet-actions {
+    align-self: flex-end;
   }
 
   .footer-content {
@@ -611,10 +721,25 @@ body {
     color: #ffffff;
   }
 
-  .action-link,
+  .header-btn {
+    background: rgba(56, 68, 77, 0.8);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .header-btn:hover {
+    background: rgba(56, 68, 77, 0.9);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
   .action-btn {
-    background: #38444d;
-    color: #ffffff;
+    background: rgba(56, 68, 77, 0.9);
+    border-color: #38444d;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .action-btn:hover {
+    background: rgba(56, 68, 77, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   }
 
   .footer {
