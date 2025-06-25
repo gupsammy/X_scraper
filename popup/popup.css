@@ -599,8 +599,94 @@ body {
     border-color: #38444d;
   }
 
+  .context-header h3,
+  .stats-section h3,
+  .progress-section h3 {
+    color: #8899a6;
+  }
+
+  .context-name {
+    color: #ffffff;
+  }
+
+  .context-description {
+    color: #8899a6;
+  }
+
+  .stat-label,
+  .update-item {
+    color: #8899a6;
+  }
+
+  .stat-number {
+    color: #1da1f2;
+  }
+
+  .progress-stats {
+    color: #ffffff;
+  }
+
+  .loading-text {
+    color: #8899a6;
+  }
+
+  .footer-links a {
+    color: #8899a6;
+  }
+
+  .footer-links a:hover {
+    color: #1da1f2;
+  }
+
+  .version {
+    color: #536471;
+  }
+
+  .separator {
+    color: #536471;
+  }
+
+  .action-btn.secondary {
+    color: #8899a6;
+  }
+
+  .action-btn.secondary:hover {
+    background: #253341;
+    color: #ffffff;
+  }
+
+  .progress-bar {
+    background: #38444d;
+  }
+
+  .update-item {
+    border-color: #38444d;
+  }
+
+  .loading-overlay {
+    background: rgba(21, 32, 43, 0.9);
+  }
+
+  .loading-spinner {
+    border-color: #38444d;
+    border-top-color: #1da1f2;
+  }
+
   .footer {
     background: #1e2732;
     border-color: #38444d;
+  }
+
+  /* Dark scrollbar */
+  .live-updates::-webkit-scrollbar-track {
+    background: #1e2732;
+  }
+
+  .live-updates::-webkit-scrollbar-thumb {
+    background: #38444d;
+  }
+
+  .live-updates::-webkit-scrollbar-thumb:hover {
+    background: #536471;
   }
 }

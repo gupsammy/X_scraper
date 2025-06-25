@@ -713,6 +713,10 @@ body {
     border-color: #38444d;
   }
 
+  .filter-group label {
+    color: #8899a6;
+  }
+
   .filter-group select,
   .filter-group input,
   .filter-actions button {
@@ -721,9 +725,62 @@ body {
     color: #ffffff;
   }
 
+  .filter-actions button:hover {
+    background: #253341;
+    border-color: #1da1f2;
+    color: #1da1f2;
+  }
+
+  .author-name {
+    color: #ffffff;
+  }
+
+  .author-handle,
+  .tweet-date {
+    color: #8899a6;
+  }
+
+  .tweet-text {
+    color: #ffffff;
+  }
+
+  .stat-item .stat-count {
+    color: #ffffff;
+  }
+
+  .stat-item .stat-icon {
+    color: #8899a6;
+  }
+
+  .empty-state h2 {
+    color: #ffffff;
+  }
+
+  .empty-state p {
+    color: #8899a6;
+  }
+
+  .loading-state {
+    color: #8899a6;
+  }
+
+  .pagination-info {
+    color: #8899a6;
+  }
+
+  .footer-content {
+    color: #8899a6;
+  }
+
+  .quoted-tweet {
+    background: #253341;
+    border-color: #38444d;
+  }
+
   .header-btn {
     background: rgba(56, 68, 77, 0.8);
     border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
   }
 
   .header-btn:hover {
@@ -745,6 +802,19 @@ body {
   .footer {
     background: #1e2732;
     border-color: #38444d;
+  }
+
+  /* Dark scrollbar */
+  ::-webkit-scrollbar-track {
+    background: #1e2732;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #38444d;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #536471;
   }
 }
 
