@@ -405,6 +405,22 @@ class TwitterDataExtractor {
   extractFullText(tweetResult) {
     if (!tweetResult) return "";
 
+    // If this tweet is a retweet, prefer the full text of the original tweet
+    // when available. This prevents truncation ("…") that often appears in
+    // the wrapper tweet. We fallback to wrapper text only when the original
+    // is missing.
+    const rt = tweetResult?.legacy?.retweeted_status_result?.result;
+    if (rt) {
+      const rtFull = this.extractFullText(rt); // recursive – will resolve note_tweet etc.
+      if (rtFull) {
+        return `RT @${
+          rt?.core?.user_results?.result?.core?.screen_name ||
+          rt?.core?.user_results?.result?.legacy?.screen_name ||
+          ""
+        }: ${rtFull}`.trim();
+      }
+    }
+
     // Long-form tweets (Twitter Notes)
     if (tweetResult.note_tweet?.note_tweet_results?.result?.text) {
       return tweetResult.note_tweet.note_tweet_results.result.text;
