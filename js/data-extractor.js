@@ -441,16 +441,43 @@ class TwitterDataExtractor {
       const quotedResult = tweetResult.quoted_status_result?.result;
       if (!quotedResult) return null;
 
+      const quotedUser = quotedResult.core?.user_results?.result;
+      const quotedLegacy = quotedResult.legacy;
+      const quotedUserLegacy = quotedUser?.legacy || {};
+      const quotedUserCore = quotedUser?.core || {};
+
+      // Get author screen name for URL construction
+      const authorScreenName = 
+        quotedUserCore?.screen_name || 
+        quotedUserLegacy?.screen_name;
+
+      // Construct tweet URL
+      const tweetUrl = authorScreenName && quotedResult.rest_id
+        ? constructTweetUrl(authorScreenName, quotedResult.rest_id)
+        : null;
+
       return {
         id: quotedResult.rest_id,
         text: this.extractFullText(quotedResult),
         author_name:
-          quotedResult.core?.user_results?.result?.core?.name ||
-          quotedResult.core?.user_results?.result?.legacy?.name,
-        author_screen_name:
-          quotedResult.core?.user_results?.result?.core?.screen_name ||
-          quotedResult.core?.user_results?.result?.legacy?.screen_name,
-        created_at: quotedResult.legacy?.created_at,
+          quotedUserCore?.name ||
+          quotedUserLegacy?.name,
+        author_screen_name: authorScreenName,
+        author_profile_image_url:
+          quotedUser?.avatar?.image_url ||
+          quotedUserLegacy?.profile_image_url_https ||
+          quotedUserLegacy?.profile_image_url ||
+          "",
+        created_at: quotedLegacy?.created_at,
+        tweet_url: tweetUrl,
+        // Include engagement metrics if available
+        like_count: quotedLegacy?.favorite_count || 0,
+        retweet_count: quotedLegacy?.retweet_count || 0,
+        reply_count: quotedLegacy?.reply_count || 0,
+        quote_count: quotedLegacy?.quote_count || 0,
+        // Include media information
+        has_media: this.hasMedia(quotedLegacy),
+        media_info: this.extractMediaInfo(quotedLegacy),
       };
     } catch (error) {
       console.error("Error extracting quoted tweet:", error);

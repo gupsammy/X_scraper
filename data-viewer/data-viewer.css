@@ -735,12 +735,173 @@ body {
   }
 }
 
+/* Quoted Tweet Styles */
 .quoted-tweet {
   margin-top: 12px;
   border: 1px solid #e1e8ed;
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.quoted-tweet:hover {
+  border-color: #1da1f2;
+  background: #f0f8ff;
+}
+
+.quoted-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.quoted-avatar-link {
+  display: block;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.quoted-avatar-link:hover {
+  transform: scale(1.05);
+}
+
+.quoted-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   background: #f7f9fa;
+  border: 1px solid #e1e8ed;
+  transition: border-color 0.2s ease;
+}
+
+.quoted-avatar-link:hover .quoted-avatar {
+  border-color: #1da1f2;
+}
+
+.quoted-author-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.quoted-author-name-link {
+  font-weight: 700;
+  color: #14171a;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.quoted-author-name-link:hover {
+  color: #1da1f2;
+  text-decoration: underline;
+}
+
+.quoted-author-handle {
+  color: #536471;
+  font-weight: 400;
+}
+
+.quoted-timestamp {
+  color: #536471;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.quoted-timestamp::before {
+  content: "·";
+  margin: 0 4px;
+  color: #536471;
+}
+
+.quoted-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #14171a;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+}
+
+.quoted-text a {
+  color: #1da1f2;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.quoted-text a:hover {
+  color: #1a91da;
+  text-decoration: underline;
+}
+
+.quoted-media {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.quoted-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.quoted-stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.quoted-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #536471;
+  font-weight: 500;
+}
+
+.quoted-stat-icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  opacity: 0.7;
+}
+
+.quoted-view-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #1da1f2;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 16px;
+  border: 1px solid #1da1f2;
+  background: rgba(29, 161, 242, 0.05);
+  transition: all 0.2s ease;
+}
+
+.quoted-view-link:hover {
+  background: rgba(29, 161, 242, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(29, 161, 242, 0.15);
+  text-decoration: none;
+}
+
+.quoted-link-icon {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
 }
 
 /* Tweet Stats */
@@ -976,6 +1137,43 @@ body {
     gap: 8px;
     text-align: center;
   }
+
+  /* Quoted tweet responsive styles */
+  .quoted-tweet {
+    padding: 12px;
+  }
+
+  .quoted-author {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .quoted-author-info {
+    font-size: 13px;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .quoted-text {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .quoted-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .quoted-stats {
+    gap: 12px;
+  }
+
+  .quoted-view-link {
+    align-self: flex-end;
+    font-size: 12px;
+    padding: 3px 6px;
+  }
 }
 
 /* Dark mode support */
@@ -1055,8 +1253,62 @@ body {
   }
 
   .quoted-tweet {
-    background: #253341;
+    background: #1e2732;
     border-color: #38444d;
+    color: #ffffff;
+  }
+
+  .quoted-tweet:hover {
+    border-color: #1da1f2;
+    background: #253341;
+  }
+
+  .quoted-author-name-link {
+    color: #ffffff;
+  }
+
+  .quoted-author-name-link:hover {
+    color: #1da1f2;
+  }
+
+  .quoted-author-handle,
+  .quoted-timestamp {
+    color: #8899a6;
+  }
+
+  .quoted-text {
+    color: #ffffff;
+  }
+
+  .quoted-text a {
+    color: #1da1f2;
+  }
+
+  .quoted-text a:hover {
+    color: #1a91da;
+  }
+
+  .quoted-stat {
+    color: #8899a6;
+  }
+
+  .quoted-view-link {
+    color: #1da1f2;
+    border-color: #1da1f2;
+    background: rgba(29, 161, 242, 0.1);
+  }
+
+  .quoted-view-link:hover {
+    background: rgba(29, 161, 242, 0.2);
+  }
+
+  .quoted-avatar {
+    background: #1e2732;
+    border-color: #38444d;
+  }
+
+  .quoted-avatar-link:hover .quoted-avatar {
+    border-color: #1da1f2;
   }
 
   .header-btn {
