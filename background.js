@@ -227,6 +227,67 @@ class TwitterCollectorBackground {
         return true;
       }
 
+      case "deleteTweet": {
+        (async () => {
+          try {
+            if (message.tweetId) {
+              await this.twitterDB.deleteTweet(message.tweetId);
+              console.log("Deleted tweet from BG DB", message.tweetId);
+              // Inform all Twitter tabs so they can sync their own DBs
+              this.broadcastToTwitterTabs({
+                action: "deleteTweet",
+                tweetId: message.tweetId,
+              });
+              sendResponse({ success: true });
+            } else {
+              sendResponse({ success: false, error: "No tweetId provided" });
+            }
+          } catch (err) {
+            console.error("Failed to delete tweet in BG DB", err);
+            sendResponse({
+              success: false,
+              error: err?.message || String(err),
+            });
+          }
+        })();
+        return true; // keep channel open for async response
+      }
+
+      case "clearAllData": {
+        (async () => {
+          try {
+            await this.twitterDB.clearAllData();
+            console.log("Cleared all data in BG DB");
+            // Invalidate data in content scripts as well
+            this.broadcastToTwitterTabs({ action: "clearAllData" });
+            sendResponse({ success: true });
+          } catch (err) {
+            console.error("Failed to clear all data in BG DB", err);
+            sendResponse({
+              success: false,
+              error: err?.message || String(err),
+            });
+          }
+        })();
+        return true;
+      }
+
+      case "getGlobalStats": {
+        (async () => {
+          try {
+            const total = await this.twitterDB.getTotalTweetCount();
+            const bySource = await this.twitterDB.getTweetCountBySource();
+            const anyActiveCaptures =
+              Object.keys(this.activeCaptures).length > 0;
+            sendResponse({ stats: { total, bySource, anyActiveCaptures } });
+          } catch (err) {
+            console.error("Failed to get global stats", err);
+            sendResponse({ error: err?.message || String(err) });
+          }
+        })();
+        return true;
+      }
+
       default:
         console.log("Unknown message type:", message.type);
     }
@@ -292,6 +353,17 @@ class TwitterCollectorBackground {
 
   onStartup() {
     console.log("Background script starting up");
+  }
+
+  // Utility to send a message to all open Twitter tabs
+  broadcastToTwitterTabs(payload) {
+    chrome.tabs.query({ url: ["*://twitter.com/*", "*://x.com/*"] }, (tabs) => {
+      tabs.forEach((tab) => {
+        if (tab.id != null) {
+          chrome.tabs.sendMessage(tab.id, payload).catch(() => {});
+        }
+      });
+    });
   }
 }
 

@@ -219,35 +219,40 @@ class TwitterCollectorPopup {
 
   async loadStatistics() {
     try {
+      // First, ask background for global stats so we always have up-to-date numbers
+      let globalStats = null;
+      try {
+        globalStats = await chrome.runtime.sendMessage({
+          type: "getGlobalStats",
+        });
+      } catch (e) {
+        console.warn("BG stats request failed", e);
+      }
+
+      if (globalStats && globalStats.stats) {
+        this.updateStatisticsDisplay({
+          total: globalStats.stats.total,
+          bySource: globalStats.stats.bySource,
+          currentSession: { isActive: globalStats.stats.anyActiveCaptures },
+        });
+      }
+
+      // Additionally, if the active tab is a Twitter page, get per-tab capture status (to show progress etc.)
       const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
       });
-
-      if (!tab || !this.isTwitterPage(tab.url)) {
-        this.updateStatisticsDisplay({
-          total: 0,
-          bySource: {},
-          currentSession: { isActive: false },
-        });
-        return;
-      }
-
-      try {
-        const response = await chrome.tabs.sendMessage(tab.id, {
-          action: "getCaptureStats",
-        });
-        if (response && response.stats) {
-          this.updateStatistics(response.stats);
+      if (tab && this.isTwitterPage(tab.url)) {
+        try {
+          const response = await chrome.tabs.sendMessage(tab.id, {
+            action: "getCaptureStats",
+          });
+          if (response && response.stats) {
+            this.updateStatistics(response.stats);
+          }
+        } catch (err) {
+          // Content script might not be injected yet – ignore
         }
-      } catch (error) {
-        console.log("Could not get stats from content script:", error);
-        // Use default stats
-        this.updateStatisticsDisplay({
-          total: 0,
-          bySource: {},
-          currentSession: { isActive: false },
-        });
       }
     } catch (error) {
       console.error("Error loading statistics:", error);

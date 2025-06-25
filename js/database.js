@@ -308,6 +308,38 @@ class TwitterDatabase {
       };
     });
   }
+
+  async deleteTweet(tweetId) {
+    // Delete a single tweet by its ID
+    if (!this.db) {
+      await this.init();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(["tweets"], "readwrite");
+      const store = transaction.objectStore("tweets");
+      const request = store.delete(tweetId);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Convenience method – clear only the tweets store but keep sessions
+  async clearAllTweets() {
+    if (!this.db) {
+      await this.init();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(["tweets"], "readwrite");
+      const store = transaction.objectStore("tweets");
+      const request = store.clear();
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
 }
 
 // Global database instance

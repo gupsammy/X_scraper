@@ -474,8 +474,40 @@ class TwitterDataViewer {
     }
 
     try {
-      const db = await this.openDatabase();
-      await this.deleteTweetFromDB(db, tweetId);
+      // Prefer deleting via background script so all extension contexts stay in sync
+      const bgResponse = await new Promise((resolve, reject) => {
+        try {
+          chrome.runtime.sendMessage(
+            { type: "deleteTweet", tweetId },
+            (res) => {
+              if (chrome.runtime.lastError) {
+                // Communication with BG failed – fallback to direct DB access
+                console.warn(
+                  "BG deletion failed, falling back to direct DB",
+                  chrome.runtime.lastError
+                );
+                resolve(null);
+              } else {
+                resolve(res);
+              }
+            }
+          );
+        } catch (err) {
+          // Some browsers/pages may not allow messaging (e.g. in testing)
+          console.warn("sendMessage threw", err);
+          resolve(null);
+        }
+      });
+
+      if (!bgResponse || bgResponse.success !== true) {
+        console.warn(
+          "Background deleteTweet failed or not supported",
+          bgResponse
+        );
+        // Fallback: attempt direct IndexedDB deletion in viewer context
+        const db = await this.openDatabase();
+        await this.deleteTweetFromDB(db, tweetId);
+      }
 
       // Remove from local arrays
       this.tweets = this.tweets.filter((t) => t.id !== tweetId);
@@ -511,8 +543,34 @@ class TwitterDataViewer {
     }
 
     try {
-      const db = await this.openDatabase();
-      await this.clearAllTweetsFromDB(db);
+      const bgResponse = await new Promise((resolve, reject) => {
+        try {
+          chrome.runtime.sendMessage({ type: "clearAllData" }, (res) => {
+            if (chrome.runtime.lastError) {
+              console.warn(
+                "BG clearAllData failed, falling back",
+                chrome.runtime.lastError
+              );
+              resolve(null);
+            } else {
+              resolve(res);
+            }
+          });
+        } catch (err) {
+          console.warn("sendMessage threw", err);
+          resolve(null);
+        }
+      });
+
+      if (!bgResponse || bgResponse.success !== true) {
+        console.warn(
+          "Background clearAllData failed or not supported",
+          bgResponse
+        );
+        // Fallback to direct deletion if BG messaging unavailable
+        const db = await this.openDatabase();
+        await this.clearAllTweetsFromDB(db);
+      }
 
       this.tweets = [];
       this.filteredTweets = [];

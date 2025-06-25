@@ -283,7 +283,27 @@ class TwitterCollectorContentScript {
           });
           return true; // Keep message channel open for async response
 
+        case "deleteTweet":
+          if (message.tweetId && window.twitterDB) {
+            window.twitterDB.deleteTweet(message.tweetId).then(() => {
+              // Remove from local cache if tracked
+              if (this.capturedTweetIds) {
+                this.capturedTweetIds.delete(message.tweetId);
+              }
+              sendResponse({ success: true });
+            });
+            return true;
+          }
+          sendResponse({ success: false, error: "tweetId missing" });
+          break;
+
         case "clearData":
+          this.clearAllData().then(() => {
+            sendResponse({ success: true });
+          });
+          return true;
+
+        case "clearAllData":
           this.clearAllData().then(() => {
             sendResponse({ success: true });
           });
