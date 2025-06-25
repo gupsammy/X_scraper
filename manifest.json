@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Twitter Bookmark & Tweet Collector",
+  "description": "Capture and store Twitter bookmarks and user tweets locally for personal knowledge management",
+  "version": "1.0.0",
+  "permissions": ["activeTab", "scripting", "contextMenus", "storage", "tabs"],
+  "host_permissions": ["*://twitter.com/*", "*://x.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["*://twitter.com/*", "*://x.com/*"],
+      "js": [
+        "js/database.js",
+        "js/data-extractor.js",
+        "js/utils.js",
+        "content-script.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Twitter Collector",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["js/*", "data-viewer/*"],
+      "matches": ["*://twitter.com/*", "*://x.com/*"]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#1d9bf0" stroke="#ffffff" stroke-width="4"/>
+  
+  <!-- Tweet/Bird icon -->
+  <path d="M45 45 L83 45 L83 55 L45 55 Z" fill="white"/>
+  <path d="M45 60 L75 60 L75 70 L45 70 Z" fill="white"/>
+  <path d="M45 75 L70 75 L70 85 L45 85 Z" fill="white"/>
+  
+  <!-- Bookmark corner -->
+  <path d="M95 35 L95 65 L85 55 L75 65 L75 35 Z" fill="white"/>
+  
+  <!-- Collection dots -->
+  <circle cx="35" cy="35" r="3" fill="white"/>
+  <circle cx="35" cy="50" r="3" fill="white"/>
+  <circle cx="35" cy="65" r="3" fill="white"/>
+  <circle cx="35" cy="80" r="3" fill="white"/>
+</svg>

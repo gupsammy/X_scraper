@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=380, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Twitter Collector</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="extension-popup">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <img src="../icons/icon48.png" alt="Twitter Collector" class="logo" />
+          <h1>Tweet Collector</h1>
+        </div>
+        <div class="status-indicator" id="status-indicator">
+          <span class="status-dot" id="status-dot"></span>
+          <span class="status-text" id="status-text">Ready</span>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Page Context Detection -->
+        <div class="context-section">
+          <div class="context-header">
+            <h3>Page Detection</h3>
+            <div class="context-icon" id="context-icon">🔍</div>
+          </div>
+          <div class="context-info">
+            <div class="context-display" id="context-display">
+              <span class="context-name" id="context-name"
+                >Navigate to Twitter</span
+              >
+              <span class="context-description" id="context-description"
+                >Go to bookmarks or profile page</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Capture Controls -->
+        <div class="capture-section">
+          <button class="capture-btn" id="capture-btn" disabled>
+            <span class="btn-icon" id="btn-icon">▶️</span>
+            <span class="btn-text" id="btn-text">Start Capture</span>
+          </button>
+
+          <div class="capture-options">
+            <label class="checkbox-label">
+              <input type="checkbox" id="auto-scroll" />
+              <span class="checkmark"></span>
+              Auto-scroll to load more
+            </label>
+          </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div
+          class="progress-section"
+          id="progress-section"
+          style="display: none"
+        >
+          <h3>Capture Progress</h3>
+          <div class="progress-info">
+            <div class="progress-stats">
+              <span id="current-session-count">0</span> tweets captured
+              <span class="session-type" id="session-type"></span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+          </div>
+          <div class="live-updates" id="live-updates">
+            <div class="update-item">Waiting for API calls...</div>
+          </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-section">
+          <h3>Statistics</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-number" id="total-tweets">0</div>
+              <div class="stat-label">Total Tweets</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="bookmarks-count">0</div>
+              <div class="stat-label">Bookmarks</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="profiles-count">0</div>
+              <div class="stat-label">Profiles</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions-section">
+          <button class="action-btn primary" id="view-data-btn">
+            <span class="btn-icon">📊</span>
+            View Captured Data
+          </button>
+
+          <div class="action-row">
+            <button class="action-btn secondary" id="export-btn">
+              <span class="btn-icon">💾</span>
+              Export
+            </button>
+            <button class="action-btn secondary" id="settings-btn">
+              <span class="btn-icon">⚙️</span>
+              Settings
+            </button>
+          </div>
+
+          <button class="action-btn danger" id="clear-data-btn">
+            <span class="btn-icon">🗑️</span>
+            Clear All Data
+          </button>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <div class="footer-links">
+          <a href="#" id="help-link">Help</a>
+          <span class="separator">•</span>
+          <a href="#" id="feedback-link">Feedback</a>
+        </div>
+        <div class="version">v1.0.0</div>
+      </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Processing...</div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

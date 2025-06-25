@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Twitter Collector - Captured Data</title>
+    <link rel="stylesheet" href="data-viewer.css" />
+  </head>
+  <body>
+    <div class="data-viewer">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <img src="../icons/icon48.png" alt="Twitter Collector" class="logo" />
+          <h1>Captured Tweets</h1>
+          <div class="header-stats">
+            <span id="total-displayed">0</span> tweets displayed
+          </div>
+        </div>
+      </header>
+
+      <!-- Controls -->
+      <div class="controls-section">
+        <div class="filters">
+          <div class="filter-group">
+            <label for="source-filter">Source:</label>
+            <select id="source-filter">
+              <option value="all">All Sources</option>
+              <option value="bookmarks">Bookmarks</option>
+              <option value="usertweets">User Profiles</option>
+              <option value="search">Search Results</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="search-input">Search:</label>
+            <input
+              type="text"
+              id="search-input"
+              placeholder="Search tweets, authors, or content..."
+            />
+          </div>
+
+          <div class="filter-group">
+            <label for="sort-select">Sort by:</label>
+            <select id="sort-select">
+              <option value="created_at_desc">Date (Newest First)</option>
+              <option value="created_at_asc">Date (Oldest First)</option>
+              <option value="like_count_desc">Most Liked</option>
+              <option value="retweet_count_desc">Most Retweeted</option>
+              <option value="author_name_asc">Author A-Z</option>
+            </select>
+          </div>
+
+          <div class="filter-actions">
+            <button id="clear-filters">Clear Filters</button>
+            <button id="export-visible">Export Visible</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" id="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading your captured tweets...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="empty-state" style="display: none">
+        <div class="empty-icon">📭</div>
+        <h2>No tweets captured yet</h2>
+        <p>
+          Start capturing tweets from your bookmarks or user profiles to see
+          them here.
+        </p>
+        <button id="go-to-twitter">Go to Twitter</button>
+      </div>
+
+      <!-- Tweets Container -->
+      <div class="tweets-container" id="tweets-container" style="display: none">
+        <!-- Tweet cards will be dynamically inserted here -->
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination" style="display: none">
+        <button id="load-more" class="load-more-btn">Load More Tweets</button>
+        <div class="pagination-info">
+          Showing <span id="showing-count">0</span> of
+          <span id="total-count">0</span> tweets
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <div class="footer-content">
+          <p>&copy; 2024 Twitter Collector Extension</p>
+          <div class="footer-links">
+            <a href="#" id="clear-all-data">Clear All Data</a>
+            <span>•</span>
+            <a href="#" id="export-all-data">Export All</a>
+            <span>•</span>
+            <a href="#" id="import-data">Import Data</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Tweet Card Template -->
+    <template id="tweet-card-template">
+      <div class="tweet-card">
+        <div class="tweet-header">
+          <div class="author-info">
+            <img class="author-avatar" src="" alt="" loading="lazy" />
+            <div class="author-details">
+              <div class="author-name-row">
+                <span class="author-name"></span>
+                <span class="verified-badge" style="display: none">✓</span>
+              </div>
+              <span class="author-handle"></span>
+            </div>
+          </div>
+          <div class="tweet-meta">
+            <span class="tweet-date"></span>
+            <span class="source-badge"></span>
+          </div>
+        </div>
+
+        <div class="tweet-content">
+          <div class="tweet-text"></div>
+          <div class="tweet-media" style="display: none"></div>
+          <div class="quoted-tweet" style="display: none"></div>
+        </div>
+
+        <div class="tweet-stats">
+          <div class="stat-item">
+            <span class="stat-icon">💬</span>
+            <span class="stat-count replies">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-icon">🔄</span>
+            <span class="stat-count retweets">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-icon">❤️</span>
+            <span class="stat-count likes">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-icon">📊</span>
+            <span class="stat-count views">0</span>
+          </div>
+        </div>
+
+        <div class="tweet-actions">
+          <a class="action-link view-original" href="#" target="_blank">
+            <span class="action-icon">🔗</span>
+            View Original
+          </a>
+          <button class="action-btn copy-link">
+            <span class="action-icon">📋</span>
+            Copy Link
+          </button>
+          <button class="action-btn delete-tweet">
+            <span class="action-icon">🗑️</span>
+            Delete
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <script src="../js/utils.js"></script>
+    <script src="data-viewer.js"></script>
+    <script>
+      // Debug IndexedDB immediately when page loads
+      async function debugDataViewerDB() {
+        console.log("=== Data Viewer IndexedDB Debug ===");
+        console.log("Page URL:", window.location.href);
+        console.log("Page origin:", window.location.origin);
+
+        try {
+          const databases = await indexedDB.databases();
+          console.log("Available databases:", databases);
+
+          const db = await new Promise((resolve, reject) => {
+            const request = indexedDB.open("TwitterCollector", 1);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+            request.onupgradeneeded = () =>
+              reject(new Error("DB doesn't exist"));
+          });
+
+          const count = await new Promise((resolve, reject) => {
+            const transaction = db.transaction(["tweets"], "readonly");
+            const store = transaction.objectStore("tweets");
+            const request = store.count();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+
+          console.log("Tweet count in data viewer context:", count);
+          db.close();
+        } catch (error) {
+          console.error("Data viewer DB debug error:", error);
+        }
+      }
+
+      // Run debug immediately
+      debugDataViewerDB();
+    </script>
+  </body>
+</html>
