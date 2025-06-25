@@ -428,17 +428,8 @@ class TwitterDataViewer {
     
     const mediaCount = mediaInfo.length;
     
-    // Add appropriate CSS class based on media count
-    mediaContainer.classList.remove("single-media", "two-media", "three-media", "four-media");
-    if (mediaCount === 1) {
-      mediaContainer.classList.add("single-media");
-    } else if (mediaCount === 2) {
-      mediaContainer.classList.add("two-media");
-    } else if (mediaCount === 3) {
-      mediaContainer.classList.add("three-media");
-    } else if (mediaCount >= 4) {
-      mediaContainer.classList.add("four-media");
-    }
+    // Set up dynamic grid layout based on media count and aspect ratios
+    this.setupMediaLayout(mediaContainer, mediaInfo);
 
     mediaInfo.forEach((media, index) => {
       // Only show first 4 media items to prevent UI issues
@@ -465,12 +456,70 @@ class TwitterDataViewer {
     });
   }
 
+  setupMediaLayout(mediaContainer, mediaInfo) {
+    const mediaCount = mediaInfo.length;
+    
+    // Remove existing layout classes
+    mediaContainer.classList.remove("single-media", "two-media", "three-media", "four-media");
+    
+    // Analyze aspect ratios to determine best layout
+    const aspectRatios = mediaInfo.map(media => {
+      if (media.width && media.height && media.width > 0 && media.height > 0) {
+        return media.width / media.height;
+      }
+      return 1; // default square aspect ratio
+    });
+    
+    const avgAspectRatio = aspectRatios.reduce((sum, ratio) => sum + ratio, 0) / aspectRatios.length;
+    const isWideMedia = avgAspectRatio > 1.5; // Landscape oriented
+    const isTallMedia = avgAspectRatio < 0.7; // Portrait oriented
+    
+    if (mediaCount === 1) {
+      mediaContainer.classList.add("single-media");
+      mediaContainer.style.gridTemplateColumns = "1fr";
+    } else if (mediaCount === 2) {
+      mediaContainer.classList.add("two-media");
+      // Stack vertically for wide media, side by side for tall/square media
+      mediaContainer.style.gridTemplateColumns = isWideMedia ? "1fr" : "1fr 1fr";
+    } else if (mediaCount === 3) {
+      mediaContainer.classList.add("three-media");
+      mediaContainer.style.gridTemplateColumns = "1fr 1fr";
+    } else if (mediaCount >= 4) {
+      mediaContainer.classList.add("four-media");
+      mediaContainer.style.gridTemplateColumns = "1fr 1fr";
+    }
+  }
+
   createImageElement(mediaItem, media, tweet) {
     const img = document.createElement("img");
     img.src = media.media_url || media.preview_url;
     img.alt = this.generateAltText(tweet.full_text);
     img.loading = "lazy";
     img.style.cursor = "pointer";
+    
+    // Set dynamic sizing based on aspect ratio
+    if (media.width && media.height) {
+      const aspectRatio = media.width / media.height;
+      
+      // For very wide images, constrain height more
+      if (aspectRatio > 2) {
+        img.style.maxHeight = "300px";
+        img.style.width = "100%";
+        img.style.objectFit = "contain";
+      } 
+      // For very tall images, constrain width
+      else if (aspectRatio < 0.5) {
+        img.style.maxWidth = "100%";
+        img.style.height = "auto";
+        img.style.objectFit = "contain";
+      }
+      // For normal aspect ratios, show full image
+      else {
+        img.style.width = "100%";
+        img.style.height = "auto";
+        img.style.objectFit = "contain";
+      }
+    }
     
     // Add click handler for full-size view
     img.addEventListener("click", () => {
@@ -491,9 +540,33 @@ class TwitterDataViewer {
     video.preload = "metadata";
     video.poster = media.preview_url;
     
+    // Set dynamic sizing based on aspect ratio
     if (media.width && media.height) {
-      video.setAttribute("width", media.width);
-      video.setAttribute("height", media.height);
+      const aspectRatio = media.width / media.height;
+      
+      // For very wide videos, constrain height
+      if (aspectRatio > 2) {
+        video.style.maxHeight = "300px";
+        video.style.width = "100%";
+        video.style.objectFit = "contain";
+      } 
+      // For very tall videos, constrain width
+      else if (aspectRatio < 0.5) {
+        video.style.maxWidth = "100%";
+        video.style.height = "auto";
+        video.style.objectFit = "contain";
+      }
+      // For normal aspect ratios, show full video
+      else {
+        video.style.width = "100%";
+        video.style.height = "auto";
+        video.style.objectFit = "contain";
+      }
+    } else {
+      // Default sizing when dimensions not available
+      video.style.width = "100%";
+      video.style.height = "auto";
+      video.style.objectFit = "contain";
     }
     
     // Create source element
@@ -537,9 +610,33 @@ class TwitterDataViewer {
     video.style.cursor = "pointer";
     mediaItem.classList.add("gif");
     
+    // Set dynamic sizing based on aspect ratio (same logic as videos)
     if (media.width && media.height) {
-      video.setAttribute("width", media.width);
-      video.setAttribute("height", media.height);
+      const aspectRatio = media.width / media.height;
+      
+      // For very wide GIFs, constrain height
+      if (aspectRatio > 2) {
+        video.style.maxHeight = "300px";
+        video.style.width = "100%";
+        video.style.objectFit = "contain";
+      } 
+      // For very tall GIFs, constrain width
+      else if (aspectRatio < 0.5) {
+        video.style.maxWidth = "100%";
+        video.style.height = "auto";
+        video.style.objectFit = "contain";
+      }
+      // For normal aspect ratios, show full GIF
+      else {
+        video.style.width = "100%";
+        video.style.height = "auto";
+        video.style.objectFit = "contain";
+      }
+    } else {
+      // Default sizing when dimensions not available
+      video.style.width = "100%";
+      video.style.height = "auto";
+      video.style.objectFit = "contain";
     }
     
     // Create source element

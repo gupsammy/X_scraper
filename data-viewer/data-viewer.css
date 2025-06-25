@@ -456,7 +456,6 @@ body {
 /* Media Display Styles */
 .tweet-media {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 8px;
   max-width: 100%;
 }
@@ -487,6 +486,21 @@ body {
   overflow: hidden;
   background: #f7f9fa;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.media-item:has(img),
+.media-item:has(video) {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.media-item img,
+.media-item video {
+  flex: 1;
 }
 
 .media-item:hover {
@@ -497,11 +511,12 @@ body {
 .media-item img {
   width: 100%;
   height: auto;
-  max-height: 400px;
-  object-fit: cover;
+  max-height: none;
+  object-fit: contain;
   display: block;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  border-radius: 8px;
 }
 
 .media-item img:hover {
@@ -511,8 +526,8 @@ body {
 .media-item video {
   width: 100%;
   height: auto;
-  max-height: 400px;
-  object-fit: cover;
+  max-height: none;
+  object-fit: contain;
   display: block;
   border-radius: 8px;
 }
@@ -673,23 +688,27 @@ body {
 /* Responsive Media Styles */
 @media (max-width: 768px) {
   .tweet-media {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     gap: 6px;
   }
   
   .tweet-media.two-media,
   .tweet-media.three-media,
   .tweet-media.four-media {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
   
   .tweet-media.three-media .media-item:first-child {
     grid-column: 1;
   }
   
+  .media-item {
+    min-height: 80px;
+  }
+  
   .media-item img,
   .media-item video {
-    max-height: 300px;
+    max-height: 250px !important;
   }
   
   .media-modal-content {
