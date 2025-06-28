@@ -54,44 +54,9 @@
         </div>
       </header>
 
-      <!-- Controls -->
-      <div class="controls-section">
-        <div class="filters">
-          <div class="filter-group">
-            <label for="source-filter">Source:</label>
-            <select id="source-filter">
-              <option value="all">All Sources</option>
-              <option value="bookmarks">Bookmarks</option>
-              <option value="usertweets">User Profiles</option>
-              <option value="search">Search Results</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label for="search-input">Search:</label>
-            <input
-              type="text"
-              id="search-input"
-              placeholder="Search tweets, authors, or content..."
-            />
-          </div>
-
-          <div class="filter-group">
-            <label for="sort-select">Sort by:</label>
-            <select id="sort-select">
-              <option value="created_at_desc">Date (Newest First)</option>
-              <option value="created_at_asc">Date (Oldest First)</option>
-              <option value="like_count_desc">Most Liked</option>
-              <option value="retweet_count_desc">Most Retweeted</option>
-              <option value="author_name_asc">Author A-Z</option>
-            </select>
-          </div>
-
-          <div class="filter-actions">
-            <button id="clear-filters">Clear Filters</button>
-            <button id="export-visible">Export Visible</button>
-          </div>
-        </div>
+      <!-- Filter Bar Container -->
+      <div id="filter-container" class="controls-section">
+        <!-- FilterBar component will be rendered here -->
       </div>
 
       <!-- Loading State -->
@@ -226,7 +191,7 @@
       </div>
     </template>
 
-    <script src="../js/utils.js"></script>
-    <script src="data-viewer.js"></script>
+    <!-- Load new modular components -->
+    <script type="module" src="src/DataViewer.js"></script>
   </body>
 </html>

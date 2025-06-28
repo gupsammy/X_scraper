@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Data Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #000;
+            color: #fff;
+        }
+        .debug-section {
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .debug-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #1DA1F2;
+        }
+        .test-container {
+            width: 100%;
+            height: 200px;
+            background-color: #111;
+            border: 1px solid #333;
+            display: grid;
+            gap: 16px;
+            padding: 16px;
+        }
+        #error-log {
+            background-color: #1a1a1a;
+            border: 1px solid #444;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Data Viewer Debug Tool</h1>
+    
+    <div class="debug-section">
+        <div class="debug-title">Component Test</div>
+        <button onclick="testComponents()">Test Components</button>
+        <button onclick="testGrid()">Test Grid</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <!-- Essential DOM elements for testing -->
+    <div id="filter-container" class="debug-section">
+        <div class="debug-title">Filter Container</div>
+        <p>This is where FilterBar should render</p>
+    </div>
+
+    <div id="tweets-container" class="test-container">
+        <!-- Tweet grid will render here -->
+    </div>
+
+    <div id="loading-state" style="display: none;">
+        <p>Loading...</p>
+    </div>
+
+    <div id="empty-state" style="display: none;">
+        <p>No tweets found</p>
+    </div>
+
+    <div id="pagination" style="display: none;">
+        <p>Pagination controls</p>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">Console Log</div>
+        <div id="error-log"></div>
+    </div>
+
+    <script type="module">
+        // Capture console logs
+        const logDiv = document.getElementById('error-log');
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        function addLog(level, ...args) {
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            logDiv.textContent += `[${timestamp}] ${level}: ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        console.log = (...args) => {
+            originalLog.apply(console, args);
+            addLog('LOG', ...args);
+        };
+
+        console.error = (...args) => {
+            originalError.apply(console, args);
+            addLog('ERROR', ...args);
+        };
+
+        console.warn = (...args) => {
+            originalWarn.apply(console, args);
+            addLog('WARN', ...args);
+        };
+
+        // Test functions
+        window.testComponents = async function() {
+            console.log('Testing component initialization...');
+            try {
+                const { TwitterDataViewer } = await import('./src/DataViewer.js');
+                console.log('DataViewer imported successfully');
+                
+                window.testViewer = new TwitterDataViewer();
+                console.log('DataViewer instance created');
+            } catch (error) {
+                console.error('Failed to create DataViewer:', error);
+            }
+        };
+
+        window.testGrid = function() {
+            console.log('Testing grid layout...');
+            const container = document.getElementById('tweets-container');
+            if (container) {
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(350px, 1fr))';
+                container.innerHTML = '<div style="background: #333; padding: 20px; border-radius: 8px;">Test Card</div>';
+                console.log('Grid test completed');
+            } else {
+                console.error('Tweets container not found');
+            }
+        };
+
+        window.clearLogs = function() {
+            logDiv.textContent = '';
+        };
+
+        // Auto-initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, starting auto-test...');
+            testComponents();
+        });
+    </script>
+</body>
+</html>
