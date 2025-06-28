@@ -49,37 +49,49 @@ export class TweetDataService {
   }
 
   async deleteTweet(tweetId) {
+    console.log("TweetDataService: Attempting to delete tweet:", tweetId);
+    
     // Try background script first for consistency across contexts
     const bgResult = await this.extensionBridge.deleteTweetViaBackground(tweetId);
+    console.log("TweetDataService: Background delete result:", bgResult);
     
     if (bgResult.success) {
+      console.log("TweetDataService: Tweet deleted successfully via background script");
       return true;
     }
 
     // Fallback to direct database deletion
+    console.log("TweetDataService: Falling back to direct database deletion");
     try {
       await this.dbRepository.deleteTweet(tweetId);
+      console.log("TweetDataService: Tweet deleted successfully via direct database");
       return true;
     } catch (error) {
-      console.error("Failed to delete tweet:", error);
+      console.error("TweetDataService: Failed to delete tweet:", error);
       return false;
     }
   }
 
   async clearAllTweets() {
+    console.log("TweetDataService: Attempting to clear all tweets");
+    
     // Try background script first for consistency
     const bgResult = await this.extensionBridge.clearAllDataViaBackground();
+    console.log("TweetDataService: Background clear result:", bgResult);
     
     if (bgResult.success) {
+      console.log("TweetDataService: All tweets cleared successfully via background script");
       return true;
     }
 
     // Fallback to direct database clear
+    console.log("TweetDataService: Falling back to direct database clear");
     try {
       await this.dbRepository.clearAllTweets();
+      console.log("TweetDataService: All tweets cleared successfully via direct database");
       return true;
     } catch (error) {
-      console.error("Failed to clear all tweets:", error);
+      console.error("TweetDataService: Failed to clear all tweets:", error);
       return false;
     }
   }

@@ -3,7 +3,7 @@ export class IndexedDBRepository {
   constructor() {
     this.db = null;
     this.dbName = "TwitterCollector";
-    this.dbVersion = 1;
+    this.dbVersion = 2; // Match the main database version
   }
 
   async openDatabase() {
@@ -17,20 +17,43 @@ export class IndexedDBRepository {
       request.onupgradeneeded = (e) => {
         const db = e.target.result;
 
+        let tweetsStore;
         if (!db.objectStoreNames.contains("tweets")) {
-          const tweetsStore = db.createObjectStore("tweets", {
+          tweetsStore = db.createObjectStore("tweets", {
             keyPath: "id",
           });
+          console.log("Tweets object store created");
+        } else {
+          tweetsStore = e.target.transaction.objectStore("tweets");
+        }
 
-          tweetsStore.createIndex("source_category", "source_category", {
+        // Ensure all indexes exist (safe to attempt create)
+        const ensureIndex = (name, keyPath) => {
+          if (!tweetsStore.indexNames.contains(name)) {
+            tweetsStore.createIndex(name, keyPath, { unique: false });
+          }
+        };
+
+        ensureIndex("source_category", "source_category");
+        ensureIndex("created_at", "created_at");
+        ensureIndex("author_screen_name", "author_screen_name");
+        ensureIndex("capture_session_id", "capture_session_id");
+        ensureIndex("author_id", "author_id");
+        ensureIndex("unique_key", "unique_key");
+
+        // Create capture sessions store for tracking
+        if (!db.objectStoreNames.contains("capture_sessions")) {
+          const sessionsStore = db.createObjectStore("capture_sessions", {
+            keyPath: "id",
+          });
+          sessionsStore.createIndex("created_at", "created_at", {
             unique: false,
           });
-          tweetsStore.createIndex("created_at", "created_at", {
+          sessionsStore.createIndex("source_type", "source_type", {
             unique: false,
           });
-          tweetsStore.createIndex("author_screen_name", "author_screen_name", {
-            unique: false,
-          });
+
+          console.log("Capture sessions object store created");
         }
       };
 
@@ -94,12 +117,21 @@ export class IndexedDBRepository {
   async clearAllTweets() {
     const db = await this.openDatabase();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(["tweets"], "readwrite");
-      const store = transaction.objectStore("tweets");
-      const request = store.clear();
+      // Clear both tweets and capture_sessions to match main database behavior
+      const transaction = db.transaction(["tweets", "capture_sessions"], "readwrite");
+      
+      const clearTweets = transaction.objectStore("tweets").clear();
+      const clearSessions = transaction.objectStore("capture_sessions").clear();
 
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      transaction.oncomplete = () => {
+        console.log("All data cleared from IndexedDBRepository");
+        resolve();
+      };
+
+      transaction.onerror = () => {
+        console.error("Failed to clear data:", transaction.error);
+        reject(transaction.error);
+      };
     });
   }
 

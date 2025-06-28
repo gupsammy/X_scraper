@@ -1,7 +1,11 @@
 // Extension Bridge - Handles communication with background script and content scripts
 export class ExtensionBridge {
   constructor() {
-    this.isExtensionContext = typeof chrome !== 'undefined' && chrome.runtime;
+    this.isExtensionContext = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage;
+    console.log("ExtensionBridge: Extension context detected:", this.isExtensionContext);
+    console.log("ExtensionBridge: chrome object:", typeof chrome);
+    console.log("ExtensionBridge: chrome.runtime:", typeof chrome?.runtime);
+    console.log("ExtensionBridge: chrome.runtime.sendMessage:", typeof chrome?.runtime?.sendMessage);
   }
 
   async getAllTweetsFromBackground() {
@@ -39,30 +43,86 @@ export class ExtensionBridge {
   }
 
   async deleteTweetViaBackground(tweetId) {
-    if (!this.isExtensionContext) return { success: false };
+    if (!this.isExtensionContext) {
+      console.log("ExtensionBridge: Not in extension context");
+      return { success: false };
+    }
 
+    console.log("ExtensionBridge: Sending delete tweet message to background script:", tweetId);
+    
     try {
+      // Check if runtime is still valid
+      if (chrome.runtime.lastError) {
+        console.warn("ExtensionBridge: Chrome runtime error detected:", chrome.runtime.lastError);
+        return { success: false };
+      }
+
       const response = await chrome.runtime.sendMessage({
         type: "deleteTweet",
         tweetId
       });
-      return response || { success: false };
+      
+      console.log("ExtensionBridge: Received response from background script:", response);
+      
+      // Check for runtime errors after message
+      if (chrome.runtime.lastError) {
+        console.warn("ExtensionBridge: Chrome runtime error after message:", chrome.runtime.lastError);
+        return { success: false };
+      }
+      
+      // Properly handle the response - background script sends { success: true/false }
+      if (response && typeof response.success === 'boolean') {
+        console.log("ExtensionBridge: Valid response received, success:", response.success);
+        return response;
+      }
+      
+      console.warn("ExtensionBridge: Invalid response from background script:", response);
+      return { success: false };
     } catch (error) {
-      console.warn("Background delete failed:", error);
+      console.warn("ExtensionBridge: Background delete failed:", error);
+      console.warn("ExtensionBridge: Chrome runtime lastError:", chrome.runtime.lastError);
       return { success: false };
     }
   }
 
   async clearAllDataViaBackground() {
-    if (!this.isExtensionContext) return { success: false };
+    if (!this.isExtensionContext) {
+      console.log("ExtensionBridge: Not in extension context");
+      return { success: false };
+    }
 
+    console.log("ExtensionBridge: Sending clear all data message to background script");
+    
     try {
+      // Check if runtime is still valid
+      if (chrome.runtime.lastError) {
+        console.warn("ExtensionBridge: Chrome runtime error detected:", chrome.runtime.lastError);
+        return { success: false };
+      }
+
       const response = await chrome.runtime.sendMessage({
         type: "clearAllData"
       });
-      return response || { success: false };
+      
+      console.log("ExtensionBridge: Received response from background script:", response);
+      
+      // Check for runtime errors after message
+      if (chrome.runtime.lastError) {
+        console.warn("ExtensionBridge: Chrome runtime error after message:", chrome.runtime.lastError);
+        return { success: false };
+      }
+      
+      // Properly handle the response - background script sends { success: true/false }
+      if (response && typeof response.success === 'boolean') {
+        console.log("ExtensionBridge: Valid response received, success:", response.success);
+        return response;
+      }
+      
+      console.warn("ExtensionBridge: Invalid response from background script:", response);
+      return { success: false };
     } catch (error) {
-      console.warn("Background clear failed:", error);
+      console.warn("ExtensionBridge: Background clear failed:", error);
+      console.warn("ExtensionBridge: Chrome runtime lastError:", chrome.runtime.lastError);
       return { success: false };
     }
   }
