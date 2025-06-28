@@ -326,7 +326,7 @@ class TwitterDataExtractor {
         tweet_url: tweetUrl,
 
         // Author information
-        author_id: user?.rest_id || "",
+        author_id: userCoreData?.screen_name || userLegacy?.screen_name || "",
         author_screen_name:
           userCoreData?.screen_name || userLegacy?.screen_name || "",
         author_name: userCoreData?.name || userLegacy?.name || "",
@@ -385,6 +385,11 @@ class TwitterDataExtractor {
         quoted_tweet: quotedTweet,
         retweeted_status: retweetedStatus,
         is_pinned: false, // Will be set to true for pinned tweets
+        unique_key: `${(
+          userCoreData?.screen_name ||
+          userLegacy?.screen_name ||
+          ""
+        ).toLowerCase()}_${tweetResult?.rest_id || ""}`,
       };
 
       debugLog(
@@ -447,21 +452,19 @@ class TwitterDataExtractor {
       const quotedUserCore = quotedUser?.core || {};
 
       // Get author screen name for URL construction
-      const authorScreenName = 
-        quotedUserCore?.screen_name || 
-        quotedUserLegacy?.screen_name;
+      const authorScreenName =
+        quotedUserCore?.screen_name || quotedUserLegacy?.screen_name;
 
       // Construct tweet URL
-      const tweetUrl = authorScreenName && quotedResult.rest_id
-        ? constructTweetUrl(authorScreenName, quotedResult.rest_id)
-        : null;
+      const tweetUrl =
+        authorScreenName && quotedResult.rest_id
+          ? constructTweetUrl(authorScreenName, quotedResult.rest_id)
+          : null;
 
       return {
         id: quotedResult.rest_id,
         text: this.extractFullText(quotedResult),
-        author_name:
-          quotedUserCore?.name ||
-          quotedUserLegacy?.name,
+        author_name: quotedUserCore?.name || quotedUserLegacy?.name,
         author_screen_name: authorScreenName,
         author_profile_image_url:
           quotedUser?.avatar?.image_url ||
@@ -547,17 +550,17 @@ class TwitterDataExtractor {
 
           // Extract and process variants
           if (item?.video_info?.variants) {
-            const allVariants = item.video_info.variants.map(variant => ({
+            const allVariants = item.video_info.variants.map((variant) => ({
               bitrate: variant.bitrate || 0,
               url: variant.url || "",
-              content_type: variant.content_type || ""
+              content_type: variant.content_type || "",
             }));
 
             mediaInfo.variants = allVariants;
 
             // Filter to MP4 variants only
             const mp4Variants = allVariants.filter(
-              variant => variant.content_type === "video/mp4"
+              (variant) => variant.content_type === "video/mp4"
             );
 
             if (mp4Variants.length > 0) {

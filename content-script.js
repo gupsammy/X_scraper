@@ -8,6 +8,9 @@ class TwitterCollectorContentScript {
     this.originalFetch = null;
     this.pageContext = null;
     this.statsUpdateInterval = null;
+    this.autoScroller = null;
+    this.autoScrollPreference = false;
+    this.firstAPICaptured = false;
 
     // Listen for posted messages from injected script
     window.addEventListener("message", (event) => {
@@ -67,6 +70,9 @@ class TwitterCollectorContentScript {
 
       // Set up page change detection
       this.setupPageChangeDetection();
+
+      // Check for auto-scroll preference from storage
+      await this.checkAutoScrollPreference();
 
       // Ask background if capture should resume (e.g., after page reload)
       chrome.runtime.sendMessage({ type: "getCaptureStatus" }, (response) => {
@@ -248,6 +254,20 @@ class TwitterCollectorContentScript {
 
       // Notify popup of progress
       this.notifyProgress(newTweets.length, sourceType);
+
+      // Notify auto-scroller of API activity
+      this.notifyAutoScrollerOfAPIActivity(url, responseText, sourceType);
+
+      // Start auto-scroll after first API capture if preference is enabled
+      if (
+        !this.firstAPICaptured &&
+        this.autoScrollPreference &&
+        this.isCapturing
+      ) {
+        this.firstAPICaptured = true;
+        debugLog("First API captured, starting auto-scroll");
+        this.startAutoScrollAfterFirstCapture();
+      }
     } catch (error) {
       console.error("Error processing API response:", error);
       debugLog("Full error details:", {
@@ -315,6 +335,18 @@ class TwitterCollectorContentScript {
           });
           return true;
 
+        case "setAutoScrollPreference":
+          this.setAutoScrollPreference(message.enabled, message.pageContext);
+          sendResponse({ success: true });
+          break;
+
+        case "getAutoScrollStatus":
+          sendResponse({
+            success: true,
+            status: this.autoScroller ? this.autoScroller.getStatus() : null,
+          });
+          break;
+
         default:
           sendResponse({ error: "Unknown action" });
       }
@@ -351,6 +383,7 @@ class TwitterCollectorContentScript {
       // Reset capture state
       this.isCapturing = true;
       this.capturedTweetIds.clear();
+      this.firstAPICaptured = false;
 
       // Start stats update interval
       this.startStatsUpdateInterval();
@@ -381,6 +414,11 @@ class TwitterCollectorContentScript {
       }
 
       debugLog("Stopping capture");
+
+      // Stop auto-scroll if active
+      if (this.autoScroller && this.autoScroller.isActive) {
+        this.stopAutoScroll();
+      }
 
       this.isCapturing = false;
 
@@ -468,10 +506,12 @@ class TwitterCollectorContentScript {
 
       const totalCount = await window.twitterDB.getTotalTweetCount();
       const countsBySource = await window.twitterDB.getTweetCountBySource();
+      const uniqueAuthors = await window.twitterDB.getUniqueAuthorCount();
 
       return {
         total: totalCount,
         bySource: countsBySource,
+        uniqueAuthors: uniqueAuthors,
         currentSession: {
           isActive: this.isCapturing,
           sessionId: this.currentSession,
@@ -488,6 +528,7 @@ class TwitterCollectorContentScript {
       return {
         total: 0,
         bySource: {},
+        uniqueAuthors: 0,
         currentSession: { isActive: false, capturedCount: 0 },
       };
     }
@@ -571,6 +612,110 @@ class TwitterCollectorContentScript {
     } catch (error) {
       console.error("Error getting tweets for viewer:", error);
       return [];
+    }
+  }
+
+  // Auto-scroll functionality
+  async setAutoScrollPreference(enabled, pageContext) {
+    try {
+      this.autoScrollPreference = enabled;
+      debugLog("Auto-scroll preference set:", { enabled, pageContext });
+
+      if (!enabled && this.autoScroller && this.autoScroller.isActive) {
+        // If disabled and currently scrolling, stop it
+        this.stopAutoScroll();
+      }
+    } catch (error) {
+      console.error("Error setting auto-scroll preference:", error);
+    }
+  }
+
+  async checkAutoScrollPreference() {
+    try {
+      // Use chrome.storage.local because chrome.storage.session is not accessible from content scripts
+      const result = await chrome.storage.local.get(["autoScrollEnabled"]);
+      this.autoScrollPreference = result.autoScrollEnabled || false;
+      debugLog("Auto-scroll preference loaded:", this.autoScrollPreference);
+    } catch (error) {
+      debugLog("No auto-scroll preference found:", error);
+      this.autoScrollPreference = false;
+    }
+  }
+
+  startAutoScrollAfterFirstCapture() {
+    try {
+      if (this.autoScroller && this.autoScroller.isActive) {
+        debugLog("Auto-scroll already active");
+        return;
+      }
+
+      const pageContext = this.getPageContext();
+      if (pageContext.type === "unknown") {
+        debugLog("Cannot start auto-scroll on unsupported page");
+        this.notifyPopup("autoScrollStopped", { reason: "unsupported_page" });
+        return;
+      }
+
+      debugLog("Starting auto-scroll after first API capture");
+
+      // Create auto-scroller instance with enhanced config - 10x faster & 10x longer distance per user request
+      const autoScrollConfig = {
+        scrollDistance: 10000,
+        waitTime: 80, // 10x faster than previous 800ms
+        baseDelay: 100, // minimum delay between scrolls reduced to 100ms
+        maxRetries: 3,
+        pageContext: pageContext,
+        onStart: (data) => {
+          debugLog("Auto-scroll started:", data);
+          this.notifyPopup("autoScrollStarted", data);
+        },
+        onStop: (data) => {
+          debugLog("Auto-scroll stopped:", data);
+          this.notifyPopup("autoScrollStopped", data);
+          this.autoScroller = null;
+        },
+        onProgress: (data) => {
+          this.notifyPopup("autoScrollProgress", data);
+        },
+        onAPIActivity: (data) => {
+          debugLog("Auto-scroll detected API activity:", data);
+        },
+      };
+
+      this.autoScroller = new AutoScroller(autoScrollConfig);
+      const started = this.autoScroller.start();
+
+      if (!started) {
+        this.notifyPopup("autoScrollStopped", { reason: "failed_to_start" });
+      }
+    } catch (error) {
+      console.error("Error starting auto-scroll:", error);
+      this.notifyPopup("autoScrollStopped", {
+        reason: "error",
+        error: error.message,
+      });
+    }
+  }
+
+  stopAutoScroll() {
+    try {
+      if (!this.autoScroller || !this.autoScroller.isActive) {
+        debugLog("Auto-scroll not active");
+        return;
+      }
+
+      debugLog("Stopping auto-scroll");
+      this.autoScroller.stop("manual");
+      this.autoScroller = null;
+    } catch (error) {
+      console.error("Error stopping auto-scroll:", error);
+    }
+  }
+
+  // Notify auto-scroller of API activity
+  notifyAutoScrollerOfAPIActivity(url, responseText, apiType) {
+    if (this.autoScroller && this.autoScroller.isActive) {
+      this.autoScroller.onAPICall(url, responseText, apiType);
     }
   }
 }

@@ -202,42 +202,92 @@ body {
   align-items: center;
 }
 
-.checkbox-label {
+.toggle-label {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   font-size: 12px;
   color: #536471;
   cursor: pointer;
   user-select: none;
+  width: 100%;
 }
 
-.checkbox-label input[type="checkbox"] {
-  display: none;
+.toggle-text {
+  font-weight: 500;
 }
 
-.checkmark {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #aab8c2;
-  border-radius: 3px;
-  margin-right: 8px;
+.toggle-switch {
   position: relative;
-  transition: all 0.2s ease;
+  width: 44px;
+  height: 24px;
+  margin: 0 8px;
 }
 
-.checkbox-label input[type="checkbox"]:checked + .checkmark {
-  background: #1da1f2;
-  border-color: #1da1f2;
+.toggle-switch input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
-.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
-  content: "✓";
+.toggle-slider {
   position: absolute;
-  top: -2px;
-  left: 2px;
-  color: white;
-  font-size: 12px;
-  font-weight: bold;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #aab8c2;
+  transition: all 0.3s ease;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #1da1f2;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.toggle-switch input:disabled + .toggle-slider {
+  background-color: #e1e8ed;
+  cursor: not-allowed;
+}
+
+.toggle-switch input:disabled + .toggle-slider:before {
+  background-color: #f1f1f1;
+}
+
+.toggle-status {
+  font-size: 10px;
+  font-weight: 600;
+  color: #aab8c2;
+  min-width: 24px;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.toggle-status.active {
+  color: #1da1f2;
+}
+
+.toggle-status.scrolling {
+  color: #10ac84;
+  animation: pulse 1.5s infinite;
 }
 
 /* Progress Section */
@@ -653,6 +703,34 @@ body {
   .action-btn.secondary:hover {
     background: #253341;
     color: #ffffff;
+  }
+
+  .toggle-label {
+    color: #8899a6;
+  }
+
+  .toggle-text {
+    color: #ffffff;
+  }
+
+  .toggle-slider {
+    background-color: #38444d;
+  }
+
+  .toggle-switch input:checked + .toggle-slider {
+    background-color: #1da1f2;
+  }
+
+  .toggle-status {
+    color: #8899a6;
+  }
+
+  .toggle-status.active {
+    color: #1da1f2;
+  }
+
+  .toggle-status.scrolling {
+    color: #10ac84;
   }
 
   .progress-bar {

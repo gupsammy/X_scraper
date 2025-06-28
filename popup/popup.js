@@ -22,6 +22,9 @@ class TwitterCollectorPopup {
       // Load initial statistics
       await this.loadStatistics();
 
+      // Load auto-scroll preference
+      await this.loadAutoScrollPreference();
+
       // Set up message listeners for real-time updates
       this.setupMessageListeners();
 
@@ -65,6 +68,12 @@ class TwitterCollectorPopup {
       e.preventDefault();
       this.openFeedback();
     });
+
+    // Auto-scroll toggle
+    const autoScrollToggle = document.getElementById("auto-scroll-toggle");
+    autoScrollToggle.addEventListener("change", (e) => {
+      this.toggleAutoScroll(e.target.checked);
+    });
   }
 
   setupMessageListeners() {
@@ -91,6 +100,18 @@ class TwitterCollectorPopup {
 
         case "statsUpdated":
           this.updateStatistics(message.data.stats);
+          break;
+
+        case "autoScrollStarted":
+          this.onAutoScrollStarted(message.data);
+          break;
+
+        case "autoScrollStopped":
+          this.onAutoScrollStopped(message.data);
+          break;
+
+        case "autoScrollProgress":
+          this.onAutoScrollProgress(message.data);
           break;
 
         default:
@@ -282,9 +303,7 @@ class TwitterCollectorPopup {
     bookmarksCount.textContent = this.formatNumber(
       stats.bySource?.bookmarks || 0
     );
-    profilesCount.textContent = this.formatNumber(
-      stats.bySource?.usertweets || 0
-    );
+    profilesCount.textContent = this.formatNumber(stats.uniqueAuthors || 0);
   }
 
   formatNumber(num) {
@@ -542,6 +561,134 @@ class TwitterCollectorPopup {
   showLoading(show) {
     const loadingOverlay = document.getElementById("loading-overlay");
     loadingOverlay.style.display = show ? "flex" : "none";
+  }
+
+  // Auto-scroll functionality
+  async toggleAutoScroll(isEnabled) {
+    try {
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+
+      if (!tab || !this.isTwitterPage(tab.url)) {
+        this.showToast("Auto-scroll only works on Twitter pages", "error");
+        this.resetAutoScrollToggle();
+        return;
+      }
+
+      if (!this.currentContext || this.currentContext.type === "unknown") {
+        this.showToast(
+          "Navigate to bookmarks, profile, or search page",
+          "error"
+        );
+        this.resetAutoScrollToggle();
+        return;
+      }
+
+      // Store auto-scroll preference (don't start scrolling yet). Using chrome.storage.local so it is accessible to content scripts even after page reload.
+      await chrome.storage.local.set({
+        autoScrollEnabled: isEnabled,
+        autoScrollPageContext: this.currentContext,
+      });
+
+      // Send preference to content script
+      const message = {
+        action: "setAutoScrollPreference",
+        enabled: isEnabled,
+        pageContext: this.currentContext,
+      };
+
+      try {
+        await chrome.tabs.sendMessage(tab.id, message);
+      } catch (e) {
+        // Content script might not be ready, but preference is stored
+        console.log("Content script not ready, preference stored for later");
+      }
+
+      // Update UI to show preference set (not active scrolling yet)
+      this.updateAutoScrollStatus(isEnabled, false, true);
+
+      if (isEnabled) {
+        this.showToast(
+          "Auto-scroll enabled - will start after capture begins",
+          "info"
+        );
+      } else {
+        this.showToast("Auto-scroll disabled", "info");
+      }
+    } catch (error) {
+      console.error("Error toggling auto-scroll:", error);
+      this.showToast("Error toggling auto-scroll", "error");
+      this.resetAutoScrollToggle();
+    }
+  }
+
+  resetAutoScrollToggle() {
+    const toggle = document.getElementById("auto-scroll-toggle");
+    const status = document.getElementById("auto-scroll-status");
+    toggle.checked = false;
+    status.textContent = "OFF";
+    status.className = "toggle-status";
+  }
+
+  updateAutoScrollStatus(
+    isPreferenceSet,
+    isScrolling = false,
+    isReady = false
+  ) {
+    const status = document.getElementById("auto-scroll-status");
+
+    if (isPreferenceSet) {
+      if (isScrolling) {
+        status.textContent = "SCROLLING";
+        status.className = "toggle-status scrolling";
+      } else if (isReady) {
+        status.textContent = "READY";
+        status.className = "toggle-status active";
+      } else {
+        status.textContent = "ON";
+        status.className = "toggle-status active";
+      }
+    } else {
+      status.textContent = "OFF";
+      status.className = "toggle-status";
+    }
+  }
+
+  onAutoScrollStarted(data) {
+    console.log("Auto-scroll started:", data);
+    this.updateAutoScrollStatus(true, false, false);
+  }
+
+  onAutoScrollStopped(data) {
+    console.log("Auto-scroll stopped:", data);
+    this.updateAutoScrollStatus(false, false, false);
+    this.resetAutoScrollToggle();
+
+    if (data.reason === "end_reached") {
+      this.showToast("Reached end of content", "info");
+    } else if (data.reason === "error") {
+      this.showToast("Auto-scroll stopped due to error", "error");
+    }
+  }
+
+  onAutoScrollProgress(data) {
+    this.updateAutoScrollStatus(true, data.isScrolling, false);
+  }
+
+  // Load auto-scroll preference from storage
+  async loadAutoScrollPreference() {
+    try {
+      const result = await chrome.storage.local.get(["autoScrollEnabled"]);
+      if (result.autoScrollEnabled) {
+        const toggle = document.getElementById("auto-scroll-toggle");
+        toggle.checked = true;
+        this.updateAutoScrollStatus(true, false, true);
+      }
+    } catch (error) {
+      console.log("No auto-scroll preference found:", error);
+    }
   }
 
   showToast(message, type = "info") {

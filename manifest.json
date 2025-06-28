@@ -12,6 +12,7 @@
         "js/database.js",
         "js/data-extractor.js",
         "js/utils.js",
+        "js/auto-scroller.js",
         "content-script.js"
       ],
       "run_at": "document_start"

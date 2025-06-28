@@ -277,9 +277,12 @@ class TwitterCollectorBackground {
           try {
             const total = await this.twitterDB.getTotalTweetCount();
             const bySource = await this.twitterDB.getTweetCountBySource();
+            const uniqueAuthors = await this.twitterDB.getUniqueAuthorCount();
             const anyActiveCaptures =
               Object.keys(this.activeCaptures).length > 0;
-            sendResponse({ stats: { total, bySource, anyActiveCaptures } });
+            sendResponse({
+              stats: { total, bySource, uniqueAuthors, anyActiveCaptures },
+            });
           } catch (err) {
             console.error("Failed to get global stats", err);
             sendResponse({ error: err?.message || String(err) });

@@ -2,7 +2,7 @@
 class TwitterDatabase {
   constructor() {
     this.dbName = "TwitterCollector";
-    this.dbVersion = 1;
+    this.dbVersion = 2;
     this.db = null;
   }
 
@@ -24,29 +24,29 @@ class TwitterDatabase {
       request.onupgradeneeded = (e) => {
         this.db = e.target.result;
 
-        // Create tweets object store
+        let tweetsStore;
         if (!this.db.objectStoreNames.contains("tweets")) {
-          const tweetsStore = this.db.createObjectStore("tweets", {
+          tweetsStore = this.db.createObjectStore("tweets", {
             keyPath: "id",
           });
-
-          // Create indexes for efficient querying
-          tweetsStore.createIndex("source_category", "source_category", {
-            unique: false,
-          });
-          tweetsStore.createIndex("created_at", "created_at", {
-            unique: false,
-          });
-          tweetsStore.createIndex("author_screen_name", "author_screen_name", {
-            unique: false,
-          });
-          tweetsStore.createIndex("capture_session_id", "capture_session_id", {
-            unique: false,
-          });
-          tweetsStore.createIndex("author_id", "author_id", { unique: false });
-
           console.log("Tweets object store created");
+        } else {
+          tweetsStore = e.target.transaction.objectStore("tweets");
         }
+
+        // Ensure indexes exist (safe to attempt create – will throw if duplicate, so guard)
+        const ensureIndex = (name, keyPath) => {
+          if (!tweetsStore.indexNames.contains(name)) {
+            tweetsStore.createIndex(name, keyPath, { unique: false });
+          }
+        };
+
+        ensureIndex("source_category", "source_category");
+        ensureIndex("created_at", "created_at");
+        ensureIndex("author_screen_name", "author_screen_name");
+        ensureIndex("capture_session_id", "capture_session_id");
+        ensureIndex("author_id", "author_id");
+        ensureIndex("unique_key", "unique_key");
 
         // Create capture sessions store for tracking
         if (!this.db.objectStoreNames.contains("capture_sessions")) {
@@ -338,6 +338,36 @@ class TwitterDatabase {
 
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Get count of unique authors (by screen name)
+  async getUniqueAuthorCount() {
+    if (!this.db) {
+      await this.init();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(["tweets"], "readonly");
+      const store = transaction.objectStore("tweets");
+      const index = store.index("author_screen_name");
+
+      const uniqueSet = new Set();
+      const cursorRequest = index.openCursor();
+
+      cursorRequest.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          uniqueSet.add(cursor.key);
+          cursor.continue();
+        } else {
+          resolve(uniqueSet.size);
+        }
+      };
+
+      cursorRequest.onerror = () => {
+        reject(cursorRequest.error);
+      };
     });
   }
 }
