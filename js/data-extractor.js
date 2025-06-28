@@ -153,16 +153,63 @@ class TwitterDataExtractor {
             hasResult: !!entry.content?.itemContent?.tweet_results?.result,
           });
 
-          const tweet = this.extractTweetFromEntry(
-            entry,
-            sourceCategory,
-            requestInfo
-          );
-          if (tweet) {
-            debugLog(`Successfully extracted tweet: ${tweet.id}`);
-            tweets.push(tweet);
+          // Handle TimelineTimelineModule entries (conversation threads, etc.)
+          if (entry.content?.entryType === "TimelineTimelineModule") {
+            debugLog(`Processing TimelineTimelineModule: ${entry.entryId}`);
+            const moduleItems = entry.content?.items || [];
+            debugLog(`Module has ${moduleItems.length} items`);
+            
+            for (const moduleItem of moduleItems) {
+              debugLog(`Processing module item: ${moduleItem.entryId}`, {
+                itemType: moduleItem.item?.itemContent?.itemType,
+                hasTweetResults: !!moduleItem.item?.itemContent?.tweet_results,
+                dispensable: moduleItem.dispensable,
+              });
+              
+              // Only process TimelineTweet items within modules
+              if (moduleItem.item?.itemContent?.itemType === "TimelineTweet") {
+                // Create a synthetic entry structure for extractTweetFromEntry
+                const syntheticEntry = {
+                  entryId: moduleItem.entryId,
+                  content: {
+                    entryType: "TimelineTimelineItem",
+                    __typename: "TimelineTimelineItem",
+                    itemContent: moduleItem.item.itemContent
+                  }
+                };
+                
+                const tweet = this.extractTweetFromEntry(
+                  syntheticEntry,
+                  sourceCategory,
+                  requestInfo
+                );
+                if (tweet) {
+                  // Mark if this tweet was dispensable (part of conversation thread)
+                  tweet.is_dispensable = moduleItem.dispensable || false;
+                  tweet.module_type = entry.entryId.includes('profile-conversation') ? 'conversation' : 
+                                     entry.entryId.includes('who-to-follow') ? 'recommendation' : 'module';
+                  debugLog(`Successfully extracted module tweet: ${tweet.id}`);
+                  tweets.push(tweet);
+                } else {
+                  debugLog(`Failed to extract tweet from module item: ${moduleItem.entryId}`);
+                }
+              } else {
+                debugLog(`Skipping non-tweet module item: ${moduleItem.entryId} (type: ${moduleItem.item?.itemContent?.itemType})`);
+              }
+            }
           } else {
-            debugLog(`Failed to extract tweet from entry: ${entry.entryId}`);
+            // Handle regular timeline items
+            const tweet = this.extractTweetFromEntry(
+              entry,
+              sourceCategory,
+              requestInfo
+            );
+            if (tweet) {
+              debugLog(`Successfully extracted tweet: ${tweet.id}`);
+              tweets.push(tweet);
+            } else {
+              debugLog(`Failed to extract tweet from entry: ${entry.entryId}`);
+            }
           }
         }
       } else if (instruction.type === "TimelinePinEntry") {
@@ -385,6 +432,8 @@ class TwitterDataExtractor {
         quoted_tweet: quotedTweet,
         retweeted_status: retweetedStatus,
         is_pinned: false, // Will be set to true for pinned tweets
+        is_dispensable: false, // Will be set to true for conversation thread tweets
+        module_type: null, // Will be set for tweets from TimelineTimelineModule
         unique_key: `${(
           userCoreData?.screen_name ||
           userLegacy?.screen_name ||
