@@ -1,18 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1da1f2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d8bd9;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="birdGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0f8ff;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dataGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ee5a52;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
   <!-- Background circle -->
-  <circle cx="64" cy="64" r="60" fill="#1d9bf0" stroke="#ffffff" stroke-width="4"/>
+  <circle cx="64" cy="64" r="60" fill="url(#bgGradient)" stroke="#0a7db8" stroke-width="2"/>
   
-  <!-- Tweet/Bird icon -->
-  <path d="M45 45 L83 45 L83 55 L45 55 Z" fill="white"/>
-  <path d="M45 60 L75 60 L75 70 L45 70 Z" fill="white"/>
-  <path d="M45 75 L70 75 L70 85 L45 85 Z" fill="white"/>
+  <!-- Stylized bird shape -->
+  <path d="M35 45 Q45 35, 55 40 Q65 35, 75 45 Q85 50, 80 65 Q75 75, 65 70 Q55 75, 45 70 Q35 65, 35 45 Z" 
+        fill="url(#birdGradient)" opacity="0.9"/>
   
-  <!-- Bookmark corner -->
-  <path d="M95 35 L95 65 L85 55 L75 65 L75 35 Z" fill="white"/>
+  <!-- Bird's eye -->
+  <circle cx="50" cy="50" r="3" fill="#1da1f2"/>
   
-  <!-- Collection dots -->
-  <circle cx="35" cy="35" r="3" fill="white"/>
-  <circle cx="35" cy="50" r="3" fill="white"/>
-  <circle cx="35" cy="65" r="3" fill="white"/>
-  <circle cx="35" cy="80" r="3" fill="white"/>
+  <!-- Data collection elements - small dots representing scraped data -->
+  <circle cx="85" cy="35" r="2" fill="url(#dataGradient)"/>
+  <circle cx="92" cy="42" r="1.5" fill="url(#dataGradient)"/>
+  <circle cx="88" cy="50" r="2.5" fill="url(#dataGradient)"/>
+  <circle cx="95" cy="58" r="1.8" fill="url(#dataGradient)"/>
+  
+  <!-- Data flow lines -->
+  <path d="M80 45 Q85 48, 90 45" stroke="url(#dataGradient)" stroke-width="1.5" fill="none" opacity="0.8"/>
+  <path d="M82 52 Q87 55, 92 52" stroke="url(#dataGradient)" stroke-width="1.5" fill="none" opacity="0.8"/>
+  
+  <!-- Bottom data visualization bars -->
+  <rect x="25" y="85" width="4" height="12" fill="url(#dataGradient)" opacity="0.7"/>
+  <rect x="32" y="82" width="4" height="15" fill="url(#dataGradient)" opacity="0.7"/>
+  <rect x="39" y="88" width="4" height="9" fill="url(#dataGradient)" opacity="0.7"/>
+  <rect x="46" y="80" width="4" height="17" fill="url(#dataGradient)" opacity="0.7"/>
+  <rect x="53" y="86" width="4" height="11" fill="url(#dataGradient)" opacity="0.7"/>
+  
+  <!-- Subtle shadow effect -->
+  <circle cx="64" cy="64" r="60" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.3"/>
 </svg>
