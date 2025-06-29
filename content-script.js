@@ -10,7 +10,7 @@ class TwitterCollectorContentScript {
     this.statsUpdateInterval = null;
     this.autoScroller = null;
     this.autoScrollPreference = false;
-    this.autoScrollSpeedIndex = 5; // Default to max speed (index 5)
+    this.autoScrollSpeedIndex = 2; // Default to 1x speed (index 2)
     this.firstAPICaptured = false;
     // History of recent API calls for rate-limit tracking (keeps ~1 min)
     this.apiHistory = []; // [{ ts: epochMillis, tweets: number }]
@@ -658,7 +658,7 @@ class TwitterCollectorContentScript {
   }
 
   // Auto-scroll functionality
-  async setAutoScrollPreference(enabled, pageContext, speedIndex = 5) {
+  async setAutoScrollPreference(enabled, pageContext, speedIndex = 2) {
     try {
       this.autoScrollPreference = enabled;
       this.autoScrollSpeedIndex = speedIndex;
@@ -705,7 +705,7 @@ class TwitterCollectorContentScript {
     } catch (error) {
       debugLog("No auto-scroll preference found:", error);
       this.autoScrollPreference = false;
-      this.autoScrollSpeedIndex = 5;
+      this.autoScrollSpeedIndex = 2;
     }
   }
 
@@ -730,7 +730,7 @@ class TwitterCollectorContentScript {
         scrollDistance: 10000,
         maxRetries: 3,
         pageContext: pageContext,
-        speedIndex: this.autoScrollSpeedIndex || 5,
+        speedIndex: this.autoScrollSpeedIndex || 2,
         onStart: (data) => {
           debugLog("Auto-scroll started:", data);
           this.notifyPopup("autoScrollStarted", data);

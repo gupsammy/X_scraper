@@ -17,14 +17,14 @@ class AutoScroller {
 
     // Hardcoded speed configurations for exact timing
     this.speedConfigs = [
-      { waitTime: 600, baseDelay: 21300, display: "1/32x (Slowest)" }, // 22400ms total
-      { waitTime: 500, baseDelay: 10200, display: "1/16x" },           // 11200ms total  
-      { waitTime: 400, baseDelay: 4700, display: "1/8x" },             // 5600ms total
-      { waitTime: 300, baseDelay: 2000, display: "1/4x" },             // 2800ms total
-      { waitTime: 200, baseDelay: 700, display: "1/2x" },              // 1400ms total
-      { waitTime: 100, baseDelay: 100, display: "1x (Max)" }           // 700ms total
+      { waitTime: 500, baseDelay: 10200, display: "1/4x (Slowest)" },  // 11200ms total  
+      { waitTime: 400, baseDelay: 4700, display: "1/2x" },             // 5600ms total
+      { waitTime: 300, baseDelay: 2000, display: "1x (Default)" },     // 2800ms total
+      { waitTime: 200, baseDelay: 700, display: "2x" },                // 1400ms total
+      { waitTime: 100, baseDelay: 100, display: "4x" },                // 700ms total
+      { waitTime: 50, baseDelay: 50, display: "8x (Max)" }             // 350ms total
     ];
-    this.currentSpeedIndex = config.speedIndex || 5; // Default to max speed (1x)
+    this.currentSpeedIndex = config.speedIndex || 2; // Default to 1x speed
     this.applySpeedConfig();
     this.recentAPIResponses = [];
 

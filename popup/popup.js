@@ -8,14 +8,14 @@ class TwitterCollectorPopup {
     
     // Speed control configuration (matches AutoScroller speedConfigs)
     this.speedLevels = [
-      { display: "1/32x (Slowest)" },
-      { display: "1/16x" },
-      { display: "1/8x" },
-      { display: "1/4x" },
+      { display: "1/4x (Slowest)" },
       { display: "1/2x" },
-      { display: "1x (Max)" }
+      { display: "1x (Default)" },
+      { display: "2x" },
+      { display: "4x" },
+      { display: "8x (Max)" }
     ];
-    this.currentSpeedIndex = 5; // Default to max speed (1x)
+    this.currentSpeedIndex = 2; // Default to 1x speed
 
     this.init();
   }
@@ -453,6 +453,10 @@ class TwitterCollectorPopup {
 
     const sessionType = document.getElementById("session-type");
     sessionType.textContent = data.context?.type || "";
+    
+    // Add capture active styling to speed selector
+    const speedSelector = document.getElementById("speed-selector");
+    speedSelector.classList.add("capture-active");
   }
 
   onCaptureStopped(data) {
@@ -464,6 +468,10 @@ class TwitterCollectorPopup {
       `Capture completed! ${data.tweetCount} tweets captured.`,
       "success"
     );
+
+    // Remove capture active styling from speed selector
+    const speedSelector = document.getElementById("speed-selector");
+    speedSelector.classList.remove("capture-active");
 
     // Reload statistics
     this.loadStatistics();
@@ -697,6 +705,14 @@ class TwitterCollectorPopup {
 
   onAutoScrollProgress(data) {
     this.updateAutoScrollStatus(true, data.isScrolling, false);
+    
+    // Update speed display if it has changed
+    if (data.currentSpeed) {
+      const speedDisplay = document.getElementById("speed-display");
+      if (speedDisplay.textContent !== data.currentSpeed) {
+        speedDisplay.textContent = data.currentSpeed;
+      }
+    }
   }
 
   // Load auto-scroll preference from storage
@@ -736,15 +752,34 @@ class TwitterCollectorPopup {
     this.currentSpeedIndex = speedIndex;
     const speedLevel = this.speedLevels[speedIndex];
     
-    // Update display
+    // Update display with visual feedback
     const speedDisplay = document.getElementById("speed-display");
+    const speedSelector = document.getElementById("speed-selector");
+    
+    // Add changing effect
+    speedDisplay.classList.add("changing");
     speedDisplay.textContent = speedLevel.display;
+    
+    // Remove changing effect after animation
+    setTimeout(() => {
+      speedDisplay.classList.remove("changing");
+    }, 300);
+    
+    // Update capture active styling
+    if (this.isCapturing) {
+      speedSelector.classList.add("capture-active");
+    }
     
     // Store preference
     this.saveSpeedPreference(speedIndex);
     
     // Send to content script if auto-scroll is active
     this.updateContentScriptSpeed();
+    
+    // Show feedback for real-time speed changes
+    if (this.isCapturing) {
+      this.showToast(`Speed changed to ${speedLevel.display}`, "info");
+    }
     
     console.log(`Speed updated to ${speedLevel.display} (index ${speedIndex})`);
   }
