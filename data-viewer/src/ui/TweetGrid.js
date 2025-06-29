@@ -72,31 +72,31 @@ export class TweetGrid {
     // Update card spacing based on view mode
     const gap = this.getGapSize();
     this.container.style.gap = `${gap}px`;
-    
+
     // Calculate padding based on viewport width
     const viewportWidth = window.innerWidth;
     let horizontalPadding;
-    
+
     if (viewportWidth < BREAKPOINTS.MOBILE) {
       // Mobile: use 20px padding
       horizontalPadding = "20px";
     } else if (viewportWidth < BREAKPOINTS.TABLET) {
-      // Tablet: use 60px padding  
+      // Tablet: use 60px padding
       horizontalPadding = "60px";
     } else {
       // Desktop: Use wider margins for better readability
       // Aim for ~600-800px content width (optimal reading width)
       const optimalContentWidth = 700;
       const minPadding = 100; // Minimum padding for very small screens
-      
-      if (viewportWidth <= optimalContentWidth + (minPadding * 2)) {
+
+      if (viewportWidth <= optimalContentWidth + minPadding * 2) {
         horizontalPadding = `${minPadding}px`;
       } else {
         const totalPadding = viewportWidth - optimalContentWidth;
         horizontalPadding = `${totalPadding / 2}px`;
       }
     }
-    
+
     this.container.style.padding = `16px ${horizontalPadding}`;
   }
 
@@ -154,6 +154,32 @@ export class TweetGrid {
     let animationIndex = 0;
 
     conversations.forEach((conversationTweets, conversationId) => {
+      // NEW: Check if we already rendered some tweets for this conversation as standalone
+      // If so, merge them so that we create a single ConversationThread element
+      const existingStandaloneTweets = [];
+      if (!this.conversationThreads.has(conversationId)) {
+        // Only search if a thread does NOT already exist for this conversation
+        this.tweetCards.forEach((cardInstance, storedTweetId) => {
+          // cardInstance might be an actual TweetCard or a placeholder object (when part of a thread)
+          const storedTweet = cardInstance?.tweet; // TweetCard instances expose the tweet via .tweet
+          if (storedTweet && storedTweet.conversation_id === conversationId) {
+            existingStandaloneTweets.push(storedTweet);
+          }
+        });
+
+        if (existingStandaloneTweets.length > 0) {
+          // Merge previously-rendered standalone tweets with the newly loaded ones
+          const combined = [...existingStandaloneTweets, ...conversationTweets];
+
+          // Remove the old standalone tweet cards from the grid & internal map
+          existingStandaloneTweets.forEach((tweet) => {
+            this.removeTweet(tweet.id);
+          });
+
+          conversationTweets = combined;
+        }
+      }
+
       if (conversationTweets.length === 1) {
         // Single tweet - render as individual tweet
         const tweet = conversationTweets[0];
@@ -167,10 +193,13 @@ export class TweetGrid {
           existingThread.updateTweets(conversationTweets);
         } else {
           // Create new conversation thread
-          const conversationThread = new ConversationThread(conversationTweets, {
-            showReplies: true,
-            maxDepth: 5
-          });
+          const conversationThread = new ConversationThread(
+            conversationTweets,
+            {
+              showReplies: true,
+              maxDepth: 5,
+            }
+          );
 
           const threadElement = conversationThread.render();
 
@@ -189,17 +218,18 @@ export class TweetGrid {
           fragment.appendChild(threadElement);
           this.conversationThreads.set(conversationId, conversationThread);
 
-          // Add individual tweet cards to the map for tracking
-          conversationTweets.forEach(tweet => {
-            // Note: We don't create individual TweetCard instances here as they're handled by ConversationThread
-            // But we track which tweets are part of conversations
-            this.tweetCards.set(tweet.id, { isConversation: true, conversationId });
+          // Track tweets that are part of this conversation so we can detect duplicates later
+          conversationTweets.forEach((tweet) => {
+            this.tweetCards.set(tweet.id, {
+              isConversation: true,
+              conversationId,
+            });
           });
         }
         animationIndex++;
       } else {
         // Multiple unrelated tweets with same conversation_id - render individually
-        conversationTweets.forEach(tweet => {
+        conversationTweets.forEach((tweet) => {
           this.renderSingleTweet(tweet, fragment, animationIndex);
           animationIndex++;
         });
@@ -224,7 +254,7 @@ export class TweetGrid {
       // Create new card
       const tweetCard = new TweetCard(tweet, {
         compact: this.options.viewMode === "compact",
-        conversationMode: false
+        conversationMode: false,
       });
 
       const cardElement = tweetCard.render();
