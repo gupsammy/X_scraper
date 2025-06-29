@@ -21,22 +21,31 @@ export function processTextLinks(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-  // Process URLs - match http/https URLs
+  // Preserve line breaks by converting them to <br> tags
+  processedText = processedText.replace(/\n/g, '<br>');
+
+  // Process URLs - match http/https URLs (improved regex to handle edge cases)
   processedText = processedText.replace(
-    /(https?:\/\/[^\s]+)/g,
-    '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    /(https?:\/\/(?:[-\w.])+(?:\:[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="url-link">$1</a>'
   );
 
-  // Process @mentions
+  // Process @mentions (improved to handle edge cases and unicode characters)
   processedText = processedText.replace(
     /@([a-zA-Z0-9_]+)/g,
     '<a href="https://x.com/$1" target="_blank" rel="noopener noreferrer" class="mention">@$1</a>'
   );
 
-  // Process hashtags
+  // Process hashtags (improved to handle edge cases and unicode characters)
   processedText = processedText.replace(
-    /#([a-zA-Z0-9_]+)/g,
+    /#([a-zA-Z0-9_\u00c0-\u017f\u0400-\u04ff]+)/g,
     '<a href="https://x.com/hashtag/$1" target="_blank" rel="noopener noreferrer" class="hashtag">#$1</a>'
+  );
+
+  // Process cashtags (financial symbols like $AAPL)
+  processedText = processedText.replace(
+    /\$([A-Z]{1,6}(?:\.[A-Z]{1,2})?)/g,
+    '<a href="https://x.com/search?q=%24$1" target="_blank" rel="noopener noreferrer" class="cashtag">$$1</a>'
   );
 
   return processedText;

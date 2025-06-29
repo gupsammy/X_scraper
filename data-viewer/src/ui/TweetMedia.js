@@ -25,6 +25,17 @@ export class TweetMedia {
 
       const mediaItem = document.createElement("div");
       mediaItem.className = "media-item";
+      
+      // Apply grid positioning for specific layouts
+      if (this.mediaInfo.length === 3) {
+        if (index === 0) {
+          mediaItem.style.gridArea = "main";
+        } else if (index === 1) {
+          mediaItem.style.gridArea = "top";
+        } else {
+          mediaItem.style.gridArea = "bottom";
+        }
+      }
 
       try {
         switch (media.type) {
@@ -54,7 +65,7 @@ export class TweetMedia {
     const mediaCount = this.mediaInfo.length;
     
     // Remove existing layout classes
-    this.container.classList.remove("single-media", "two-media", "three-media", "four-media");
+    this.container.classList.remove("single-media", "two-media", "three-media", "four-media", "mixed-layout");
     
     // Analyze aspect ratios for optimal layout
     const aspectRatios = this.mediaInfo.map(media => {
@@ -66,21 +77,53 @@ export class TweetMedia {
     
     const avgAspectRatio = aspectRatios.reduce((sum, ratio) => sum + ratio, 0) / aspectRatios.length;
     const isWideMedia = avgAspectRatio > 1.5;
+    const isTallMedia = avgAspectRatio < 0.8;
     
-    // Set grid layout based on count and aspect ratio
+    // Twitter-style grid layouts
     if (mediaCount === 1) {
       this.container.classList.add("single-media");
       this.container.style.gridTemplateColumns = "1fr";
+      this.container.style.gridTemplateRows = "auto";
+      this.container.style.maxHeight = "400px"; // Limit single media height
     } else if (mediaCount === 2) {
       this.container.classList.add("two-media");
-      this.container.style.gridTemplateColumns = isWideMedia ? "1fr" : "1fr 1fr";
+      
+      if (isWideMedia) {
+        // Stack vertically for wide images
+        this.container.style.gridTemplateColumns = "1fr";
+        this.container.style.gridTemplateRows = "1fr 1fr";
+      } else if (isTallMedia) {
+        // Side by side for tall images
+        this.container.style.gridTemplateColumns = "1fr 1fr";
+        this.container.style.gridTemplateRows = "1fr";
+      } else {
+        // Default side by side
+        this.container.style.gridTemplateColumns = "1fr 1fr";
+        this.container.style.gridTemplateRows = "1fr";
+      }
+      this.container.style.maxHeight = "300px";
     } else if (mediaCount === 3) {
       this.container.classList.add("three-media");
-      this.container.style.gridTemplateColumns = "1fr 1fr";
+      // Twitter-style: first image large on left, other two stacked on right
+      this.container.style.gridTemplateColumns = "2fr 1fr";
+      this.container.style.gridTemplateRows = "1fr 1fr";
+      this.container.style.maxHeight = "300px";
+      
+      // First item spans two rows
+      this.container.style.gridTemplateAreas = '"main top" "main bottom"';
     } else {
       this.container.classList.add("four-media");
+      // 2x2 grid for four media items
       this.container.style.gridTemplateColumns = "1fr 1fr";
+      this.container.style.gridTemplateRows = "1fr 1fr";
+      this.container.style.maxHeight = "300px";
     }
+
+    // Add responsive behavior
+    this.container.style.display = "grid";
+    this.container.style.gap = "4px";
+    this.container.style.borderRadius = "12px";
+    this.container.style.overflow = "hidden";
   }
 
   createImageElement(mediaItem, media) {

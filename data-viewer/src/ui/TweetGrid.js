@@ -1,5 +1,6 @@
-// Tweet Grid Component - Responsive masonry-style layout
+// Tweet Grid Component - Responsive masonry-style layout with conversation support
 import { TweetCard } from "./TweetCard.js";
+import { ConversationThread } from "./ConversationThread.js";
 import {
   BREAKPOINTS,
   GRID_COLUMNS,
@@ -13,10 +14,12 @@ export class TweetGrid {
       viewMode: "comfortable",
       enableAnimation: true,
       infiniteScroll: false,
+      groupConversations: true, // New option to enable conversation grouping
       ...options,
     };
 
     this.tweetCards = new Map(); // tweetId -> TweetCard instance
+    this.conversationThreads = new Map(); // conversationId -> ConversationThread instance
     this.observer = null;
     this.resizeObserver = null;
 
@@ -33,6 +36,7 @@ export class TweetGrid {
     this.container.className = `tweet-grid ${this.options.viewMode}`;
     this.container.style.cssText = `
       display: grid;
+      grid-template-columns: 1fr;
       gap: 16px;
       padding: 16px;
       transition: all ${ANIMATION_DURATION}ms ease;
@@ -62,35 +66,38 @@ export class TweetGrid {
   }
 
   updateGridLayout() {
-    const containerWidth = this.container.clientWidth;
-    let columns;
-
-    // Determine number of columns based on viewport and view mode
-    if (containerWidth < BREAKPOINTS.MOBILE) {
-      columns = GRID_COLUMNS.MOBILE;
-    } else if (containerWidth < BREAKPOINTS.TABLET) {
-      columns = GRID_COLUMNS.TABLET;
-    } else if (containerWidth < BREAKPOINTS.DESKTOP) {
-      columns = GRID_COLUMNS.DESKTOP;
-    } else if (containerWidth < BREAKPOINTS.ULTRA_WIDE) {
-      columns = GRID_COLUMNS.DESKTOP;
-    } else {
-      columns = GRID_COLUMNS.ULTRA_WIDE;
-    }
-
-    // Adjust for view mode
-    if (this.options.viewMode === "compact") {
-      columns = Math.min(columns + 1, 5); // Add one more column in compact mode
-    } else if (this.options.viewMode === "spacious") {
-      columns = Math.max(columns - 1, 1); // Remove one column in spacious mode
-    }
-
-    // Apply grid layout
-    this.container.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+    // Always use single column layout
+    this.container.style.gridTemplateColumns = "1fr";
 
     // Update card spacing based on view mode
     const gap = this.getGapSize();
     this.container.style.gap = `${gap}px`;
+    
+    // Calculate padding based on viewport width
+    const viewportWidth = window.innerWidth;
+    let horizontalPadding;
+    
+    if (viewportWidth < BREAKPOINTS.MOBILE) {
+      // Mobile: use 20px padding
+      horizontalPadding = "20px";
+    } else if (viewportWidth < BREAKPOINTS.TABLET) {
+      // Tablet: use 60px padding  
+      horizontalPadding = "60px";
+    } else {
+      // Desktop: Use wider margins for better readability
+      // Aim for ~600-800px content width (optimal reading width)
+      const optimalContentWidth = 700;
+      const minPadding = 100; // Minimum padding for very small screens
+      
+      if (viewportWidth <= optimalContentWidth + (minPadding * 2)) {
+        horizontalPadding = `${minPadding}px`;
+      } else {
+        const totalPadding = viewportWidth - optimalContentWidth;
+        horizontalPadding = `${totalPadding / 2}px`;
+      }
+    }
+    
+    this.container.style.padding = `16px ${horizontalPadding}`;
   }
 
   getGapSize() {
@@ -129,40 +136,114 @@ export class TweetGrid {
 
     const fragment = document.createDocumentFragment();
 
-    tweets.forEach((tweet, index) => {
-      if (this.tweetCards.has(tweet.id)) {
-        // Update existing card
-        const existingCard = this.tweetCards.get(tweet.id);
-        existingCard.updateData(tweet);
-      } else {
-        // Create new card
-        const tweetCard = new TweetCard(tweet, {
-          compact: this.options.viewMode === "compact",
-        });
-
-        const cardElement = tweetCard.render();
-
-        // Add stagger animation for smooth loading
-        if (this.options.enableAnimation) {
-          cardElement.style.opacity = "0";
-          cardElement.style.transform = "translateY(20px)";
-
-          setTimeout(() => {
-            cardElement.style.transition = `opacity ${ANIMATION_DURATION}ms ease, transform ${ANIMATION_DURATION}ms ease`;
-            cardElement.style.opacity = "1";
-            cardElement.style.transform = "translateY(0)";
-          }, index * 50); // Stagger by 50ms
-        }
-
-        fragment.appendChild(cardElement);
-        this.tweetCards.set(tweet.id, tweetCard);
-      }
-    });
+    if (this.options.groupConversations) {
+      this.renderConversations(tweets, fragment);
+    } else {
+      this.renderIndividualTweets(tweets, fragment);
+    }
 
     this.container.appendChild(fragment);
 
     // Update infinite scroll observer
     this.updateInfiniteScrollTarget();
+  }
+
+  renderConversations(tweets, fragment) {
+    // Group tweets by conversation
+    const conversations = ConversationThread.groupTweetsByConversation(tweets);
+    let animationIndex = 0;
+
+    conversations.forEach((conversationTweets, conversationId) => {
+      if (conversationTweets.length === 1) {
+        // Single tweet - render as individual tweet
+        const tweet = conversationTweets[0];
+        this.renderSingleTweet(tweet, fragment, animationIndex);
+        animationIndex++;
+      } else if (ConversationThread.isConversation(conversationTweets)) {
+        // Multiple related tweets - render as conversation thread
+        if (this.conversationThreads.has(conversationId)) {
+          // Update existing conversation
+          const existingThread = this.conversationThreads.get(conversationId);
+          existingThread.updateTweets(conversationTweets);
+        } else {
+          // Create new conversation thread
+          const conversationThread = new ConversationThread(conversationTweets, {
+            showReplies: true,
+            maxDepth: 5
+          });
+
+          const threadElement = conversationThread.render();
+
+          // Add stagger animation
+          if (this.options.enableAnimation) {
+            threadElement.style.opacity = "0";
+            threadElement.style.transform = "translateY(20px)";
+
+            setTimeout(() => {
+              threadElement.style.transition = `opacity ${ANIMATION_DURATION}ms ease, transform ${ANIMATION_DURATION}ms ease`;
+              threadElement.style.opacity = "1";
+              threadElement.style.transform = "translateY(0)";
+            }, animationIndex * 100); // Longer stagger for conversations
+          }
+
+          fragment.appendChild(threadElement);
+          this.conversationThreads.set(conversationId, conversationThread);
+
+          // Add individual tweet cards to the map for tracking
+          conversationTweets.forEach(tweet => {
+            // Note: We don't create individual TweetCard instances here as they're handled by ConversationThread
+            // But we track which tweets are part of conversations
+            this.tweetCards.set(tweet.id, { isConversation: true, conversationId });
+          });
+        }
+        animationIndex++;
+      } else {
+        // Multiple unrelated tweets with same conversation_id - render individually
+        conversationTweets.forEach(tweet => {
+          this.renderSingleTweet(tweet, fragment, animationIndex);
+          animationIndex++;
+        });
+      }
+    });
+  }
+
+  renderIndividualTweets(tweets, fragment) {
+    tweets.forEach((tweet, index) => {
+      this.renderSingleTweet(tweet, fragment, index);
+    });
+  }
+
+  renderSingleTweet(tweet, fragment, animationIndex) {
+    if (this.tweetCards.has(tweet.id)) {
+      // Update existing card
+      const existingCard = this.tweetCards.get(tweet.id);
+      if (existingCard.updateData) {
+        existingCard.updateData(tweet);
+      }
+    } else {
+      // Create new card
+      const tweetCard = new TweetCard(tweet, {
+        compact: this.options.viewMode === "compact",
+        conversationMode: false
+      });
+
+      const cardElement = tweetCard.render();
+
+      // Add stagger animation for smooth loading
+      if (this.options.enableAnimation) {
+        cardElement.style.opacity = "0";
+        cardElement.style.transform = "translateY(20px)";
+
+        setTimeout(() => {
+          cardElement.style.transition = `opacity ${ANIMATION_DURATION}ms ease, transform ${ANIMATION_DURATION}ms ease`;
+          cardElement.style.opacity = "1";
+          cardElement.style.transform = "translateY(0)";
+        }, animationIndex * 50); // Stagger by 50ms
+      }
+
+      fragment.appendChild(cardElement);
+      this.tweetCards.set(tweet.id, tweetCard);
+    }
   }
 
   updateInfiniteScrollTarget() {
@@ -222,44 +303,50 @@ export class TweetGrid {
   }
 
   clear() {
-    // Capture the cards that are currently in the grid _before_ we start rendering
+    // Capture both cards and conversation threads that are currently in the grid
     const existingCards = Array.from(
       this.container.querySelectorAll(".tweet-card")
     );
+    const existingThreads = Array.from(
+      this.container.querySelectorAll(".conversation-thread")
+    );
 
-    // Reset internal map so that subsequent renders start fresh
+    // Reset internal maps so that subsequent renders start fresh
     this.tweetCards.clear();
+    this.conversationThreads.clear();
 
     // If there is nothing to remove, just ensure the container is empty right away
-    if (existingCards.length === 0) {
+    if (existingCards.length === 0 && existingThreads.length === 0) {
       this.container.innerHTML = "";
       return;
     }
 
+    const allElements = [...existingCards, ...existingThreads];
+
     if (this.options.enableAnimation) {
-      // Animate each existing card out and remove it *individually* after the animation.
-      existingCards.forEach((card, index) => {
+      // Animate each existing element out and remove it *individually* after the animation.
+      allElements.forEach((element, index) => {
         const delay = index * 20;
 
         // Animate out
         setTimeout(() => {
-          card.style.transition = `opacity ${ANIMATION_DURATION}ms ease, transform ${ANIMATION_DURATION}ms ease`;
-          card.style.opacity = "0";
-          card.style.transform = "translateY(-20px)";
+          element.style.transition = `opacity ${ANIMATION_DURATION}ms ease, transform ${ANIMATION_DURATION}ms ease`;
+          element.style.opacity = "0";
+          element.style.transform = "translateY(-20px)";
         }, delay);
 
-        // Remove after animation completes so that brand-new cards added meanwhile are untouched
+        // Remove after animation completes so that brand-new elements added meanwhile are untouched
         setTimeout(() => {
-          if (card.parentNode) {
-            card.parentNode.removeChild(card);
+          if (element.parentNode) {
+            element.parentNode.removeChild(element);
           }
         }, delay + ANIMATION_DURATION);
       });
     } else {
       // No animation – remove immediately
-      existingCards.forEach((card) => {
-        if (card.parentNode) {
-          card.parentNode.removeChild(card);
+      allElements.forEach((element) => {
+        if (element.parentNode) {
+          element.parentNode.removeChild(element);
         }
       });
     }

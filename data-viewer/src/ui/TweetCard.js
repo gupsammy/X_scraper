@@ -10,6 +10,9 @@ export class TweetCard {
     this.options = {
       compact: false,
       showFullText: false,
+      isReply: false,
+      isMainTweet: false,
+      conversationMode: false,
       ...options
     };
     this.element = null;
@@ -17,25 +20,59 @@ export class TweetCard {
 
   render() {
     this.element = document.createElement("article");
-    this.element.className = `tweet-card ${this.options.compact ? 'compact' : ''}`;
+    let className = `tweet-card ${this.options.compact ? 'compact' : ''}`;
+    
+    // Add conversation-specific classes
+    if (this.options.conversationMode) {
+      className += ' conversation-tweet';
+      if (this.options.isReply) {
+        className += ' reply-tweet';
+      }
+      if (this.options.isMainTweet) {
+        className += ' main-tweet';
+      }
+    }
+    
+    this.element.className = className;
     this.element.dataset.tweetId = this.tweet.id;
 
-    // Build card structure
-    this.element.innerHTML = `
-      <div class="tweet-header">
-        ${this.renderAuthorSection()}
-        ${this.renderMetaSection()}
-      </div>
-      <div class="tweet-content">
-        ${this.renderTextContent()}
-        ${this.renderQuotedTweet()}
-        <div class="tweet-media"></div>
-      </div>
-      <div class="tweet-footer">
-        ${this.renderEngagementStats()}
-        ${this.renderActions()}
-      </div>
-    `;
+    // Build card structure with dynamic layout for conversation mode
+    if (this.options.conversationMode) {
+      this.element.innerHTML = `
+        <div class="tweet-body">
+          <div class="tweet-header">
+            ${this.renderAuthorSection()}
+            ${this.renderMetaSection()}
+          </div>
+          <div class="tweet-content">
+            ${this.renderTextContent()}
+            ${this.renderQuotedTweet()}
+            <div class="tweet-media"></div>
+          </div>
+        </div>
+        <div class="tweet-footer">
+          ${this.renderEngagementStats()}
+          ${this.renderActions()}
+        </div>
+      `;
+    } else {
+      // Standard layout for individual tweets
+      this.element.innerHTML = `
+        <div class="tweet-header">
+          ${this.renderAuthorSection()}
+          ${this.renderMetaSection()}
+        </div>
+        <div class="tweet-content">
+          ${this.renderTextContent()}
+          ${this.renderQuotedTweet()}
+          <div class="tweet-media"></div>
+        </div>
+        <div class="tweet-footer">
+          ${this.renderEngagementStats()}
+          ${this.renderActions()}
+        </div>
+      `;
+    }
 
     // Render media if present
     if (this.tweet.has_media && this.tweet.media_info && this.tweet.media_info.length > 0) {
