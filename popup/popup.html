@@ -30,9 +30,16 @@
           <div class="context-header">
             <h3>Page Detection</h3>
             <div class="context-icon" id="context-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                width="16"
+                height="16"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
               </svg>
             </div>
           </div>
@@ -52,8 +59,13 @@
         <div class="capture-section">
           <button class="capture-btn" id="capture-btn" disabled>
             <span class="btn-icon" id="btn-icon">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                <path d="M8 5v14l11-7z"/>
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                width="16"
+                height="16"
+              >
+                <path d="M8 5v14l11-7z" />
               </svg>
             </span>
             <span class="btn-text" id="btn-text">Start Capture</span>
@@ -68,6 +80,26 @@
               </div>
               <span class="toggle-status" id="auto-scroll-status">OFF</span>
             </label>
+
+            <div class="speed-selector" id="speed-selector">
+              <label class="speed-label">
+                <span class="speed-text">Speed</span>
+                <div class="speed-control">
+                  <span class="speed-indicator slow">1/32x</span>
+                  <input 
+                    type="range" 
+                    id="speed-slider" 
+                    min="0" 
+                    max="5" 
+                    value="5" 
+                    step="1"
+                    class="speed-slider"
+                  />
+                  <span class="speed-indicator fast">1x</span>
+                </div>
+                <span class="speed-display" id="speed-display">1x (Max)</span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -115,10 +147,17 @@
         <div class="actions-section">
           <button class="action-btn primary" id="view-data-btn">
             <span class="btn-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <line x1="18" y1="20" x2="18" y2="10"/>
-                <line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                width="16"
+                height="16"
+              >
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
               </svg>
             </span>
             View Captured Data
@@ -127,32 +166,57 @@
           <div class="action-row">
             <button class="action-btn secondary" id="export-btn">
               <span class="btn-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7,10 12,15 17,10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  width="16"
+                  height="16"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7,10 12,15 17,10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </span>
               Export
             </button>
             <button class="action-btn secondary" id="settings-btn">
               <span class="btn-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m15.5-6.5l-4.24 4.24M7.76 12.76l-4.24 4.24m8.48-13.48l-4.24 4.24m4.24 8.48l-4.24-4.24"/>
-              </svg>
-            </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  width="16"
+                  height="16"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M12 1v6m0 6v6m11-7h-6m-6 0H1m15.5-6.5l-4.24 4.24M7.76 12.76l-4.24 4.24m8.48-13.48l-4.24 4.24m4.24 8.48l-4.24-4.24"
+                  />
+                </svg>
+              </span>
               Settings
             </button>
           </div>
 
           <button class="action-btn danger" id="clear-data-btn">
             <span class="btn-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <polyline points="3,6 5,6 21,6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                <line x1="10" y1="11" x2="10" y2="17"/>
-                <line x1="14" y1="11" x2="14" y2="17"/>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                width="16"
+                height="16"
+              >
+                <polyline points="3,6 5,6 21,6" />
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
               </svg>
             </span>
             Clear All Data

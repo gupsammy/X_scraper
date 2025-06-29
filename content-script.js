@@ -10,7 +10,10 @@ class TwitterCollectorContentScript {
     this.statsUpdateInterval = null;
     this.autoScroller = null;
     this.autoScrollPreference = false;
+    this.autoScrollSpeedIndex = 5; // Default to max speed (index 5)
     this.firstAPICaptured = false;
+    // History of recent API calls for rate-limit tracking (keeps ~1 min)
+    this.apiHistory = []; // [{ ts: epochMillis, tweets: number }]
 
     // Listen for posted messages from injected script
     window.addEventListener("message", (event) => {
@@ -216,6 +219,40 @@ class TwitterCollectorContentScript {
         (tweet) => !this.capturedTweetIds.has(tweet.id)
       );
 
+      // --------------------------
+      //  Rate-limit measurement
+      // --------------------------
+      try {
+        const nowTs = Date.now();
+        // Record this API call along with number of *unique* tweets obtained
+        this.apiHistory.push({ ts: nowTs, tweets: newTweets.length });
+
+        // Retain only events from the last 60 s so memory stays bounded
+        const sixtySecAgo = nowTs - 60_000;
+        this.apiHistory = this.apiHistory.filter(
+          (rec) => rec.ts >= sixtySecAgo
+        );
+
+        // 10-second window metrics
+        const tenSecAgo = nowTs - 10_000;
+        const slice10 = this.apiHistory.filter((rec) => rec.ts >= tenSecAgo);
+        const calls10 = slice10.length;
+        const tweets10 = slice10.reduce((sum, rec) => sum + rec.tweets, 0);
+
+        // 60-second window metrics
+        const calls60 = this.apiHistory.length;
+        const tweets60 = this.apiHistory.reduce(
+          (sum, rec) => sum + rec.tweets,
+          0
+        );
+
+        debugLog(
+          `[RATE] ${calls10} calls/${tweets10} tweets (10s) | ${calls60} calls/${tweets60} tweets (60s)`
+        );
+      } catch (err) {
+        // Silently ignore any stats errors so we never break capture flow
+      }
+
       debugLog(`${newTweets.length} new tweets after duplicate filtering`);
       if (newTweets.length === 0) {
         debugLog("All tweets were duplicates");
@@ -336,7 +373,12 @@ class TwitterCollectorContentScript {
           return true;
 
         case "setAutoScrollPreference":
-          this.setAutoScrollPreference(message.enabled, message.pageContext);
+          this.setAutoScrollPreference(message.enabled, message.pageContext, message.speedIndex);
+          sendResponse({ success: true });
+          break;
+
+        case "updateAutoScrollSpeed":
+          this.updateAutoScrollSpeed(message.speedIndex);
           sendResponse({ success: true });
           break;
 
@@ -616,10 +658,11 @@ class TwitterCollectorContentScript {
   }
 
   // Auto-scroll functionality
-  async setAutoScrollPreference(enabled, pageContext) {
+  async setAutoScrollPreference(enabled, pageContext, speedIndex = 5) {
     try {
       this.autoScrollPreference = enabled;
-      debugLog("Auto-scroll preference set:", { enabled, pageContext });
+      this.autoScrollSpeedIndex = speedIndex;
+      debugLog("Auto-scroll preference set:", { enabled, pageContext, speedIndex });
 
       if (!enabled && this.autoScroller && this.autoScroller.isActive) {
         // If disabled and currently scrolling, stop it
@@ -630,15 +673,39 @@ class TwitterCollectorContentScript {
     }
   }
 
+  updateAutoScrollSpeed(speedIndex) {
+    try {
+      this.autoScrollSpeedIndex = speedIndex;
+      debugLog("Auto-scroll speed updated:", speedIndex);
+      
+      // Update active auto-scroller if running
+      if (this.autoScroller && this.autoScroller.isActive) {
+        this.autoScroller.updateSpeed(speedIndex);
+      }
+    } catch (error) {
+      console.error("Error updating auto-scroll speed:", error);
+    }
+  }
+
   async checkAutoScrollPreference() {
     try {
       // Use chrome.storage.local because chrome.storage.session is not accessible from content scripts
-      const result = await chrome.storage.local.get(["autoScrollEnabled"]);
+      const result = await chrome.storage.local.get(["autoScrollEnabled", "autoScrollSpeedIndex"]);
       this.autoScrollPreference = result.autoScrollEnabled || false;
-      debugLog("Auto-scroll preference loaded:", this.autoScrollPreference);
+      
+      // Load speed index
+      if (result.autoScrollSpeedIndex !== undefined) {
+        this.autoScrollSpeedIndex = result.autoScrollSpeedIndex;
+      }
+      
+      debugLog("Auto-scroll preference loaded:", { 
+        enabled: this.autoScrollPreference, 
+        speedIndex: this.autoScrollSpeedIndex 
+      });
     } catch (error) {
       debugLog("No auto-scroll preference found:", error);
       this.autoScrollPreference = false;
+      this.autoScrollSpeedIndex = 5;
     }
   }
 
@@ -658,13 +725,12 @@ class TwitterCollectorContentScript {
 
       debugLog("Starting auto-scroll after first API capture");
 
-      // Create auto-scroller instance with enhanced config - 10x faster & 10x longer distance per user request
+      // Create auto-scroller instance with user-selected speed index
       const autoScrollConfig = {
         scrollDistance: 10000,
-        waitTime: 80, // 10x faster than previous 800ms
-        baseDelay: 100, // minimum delay between scrolls reduced to 100ms
         maxRetries: 3,
         pageContext: pageContext,
+        speedIndex: this.autoScrollSpeedIndex || 5,
         onStart: (data) => {
           debugLog("Auto-scroll started:", data);
           this.notifyPopup("autoScrollStarted", data);
@@ -732,7 +798,7 @@ if (document.readyState === "loading") {
 }
 
 // Handle context menu activation
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === "startSmartCapture") {
     if (twitterCollector) {
       twitterCollector.startCapture();

@@ -5,6 +5,17 @@ class TwitterCollectorPopup {
     this.currentContext = null;
     this.currentStats = null;
     this.updateInterval = null;
+    
+    // Speed control configuration (matches AutoScroller speedConfigs)
+    this.speedLevels = [
+      { display: "1/32x (Slowest)" },
+      { display: "1/16x" },
+      { display: "1/8x" },
+      { display: "1/4x" },
+      { display: "1/2x" },
+      { display: "1x (Max)" }
+    ];
+    this.currentSpeedIndex = 5; // Default to max speed (1x)
 
     this.init();
   }
@@ -22,8 +33,9 @@ class TwitterCollectorPopup {
       // Load initial statistics
       await this.loadStatistics();
 
-      // Load auto-scroll preference
+      // Load auto-scroll preference and speed setting
       await this.loadAutoScrollPreference();
+      await this.loadSpeedPreference();
 
       // Set up message listeners for real-time updates
       this.setupMessageListeners();
@@ -73,6 +85,12 @@ class TwitterCollectorPopup {
     const autoScrollToggle = document.getElementById("auto-scroll-toggle");
     autoScrollToggle.addEventListener("change", (e) => {
       this.toggleAutoScroll(e.target.checked);
+    });
+
+    // Speed slider
+    const speedSlider = document.getElementById("speed-slider");
+    speedSlider.addEventListener("input", (e) => {
+      this.updateSpeedSelection(parseInt(e.target.value));
     });
   }
 
@@ -592,11 +610,15 @@ class TwitterCollectorPopup {
         autoScrollPageContext: this.currentContext,
       });
 
-      // Send preference to content script
+      // Show/hide speed selector
+      this.toggleSpeedSelectorVisibility(isEnabled);
+
+      // Send preference to content script with current speed setting
       const message = {
         action: "setAutoScrollPreference",
         enabled: isEnabled,
         pageContext: this.currentContext,
+        speedIndex: this.currentSpeedIndex,
       };
 
       try {
@@ -685,6 +707,7 @@ class TwitterCollectorPopup {
         const toggle = document.getElementById("auto-scroll-toggle");
         toggle.checked = true;
         this.updateAutoScrollStatus(true, false, true);
+        this.toggleSpeedSelectorVisibility(true);
       }
     } catch (error) {
       console.log("No auto-scroll preference found:", error);
@@ -706,6 +729,76 @@ class TwitterCollectorPopup {
         toast.parentNode.removeChild(toast);
       }
     }, 3000);
+  }
+
+  // Speed control methods
+  updateSpeedSelection(speedIndex) {
+    this.currentSpeedIndex = speedIndex;
+    const speedLevel = this.speedLevels[speedIndex];
+    
+    // Update display
+    const speedDisplay = document.getElementById("speed-display");
+    speedDisplay.textContent = speedLevel.display;
+    
+    // Store preference
+    this.saveSpeedPreference(speedIndex);
+    
+    // Send to content script if auto-scroll is active
+    this.updateContentScriptSpeed();
+    
+    console.log(`Speed updated to ${speedLevel.display} (index ${speedIndex})`);
+  }
+
+  async saveSpeedPreference(speedIndex) {
+    try {
+      await chrome.storage.local.set({ autoScrollSpeedIndex: speedIndex });
+    } catch (error) {
+      console.log("Error saving speed preference:", error);
+    }
+  }
+
+  async loadSpeedPreference() {
+    try {
+      const result = await chrome.storage.local.get(["autoScrollSpeedIndex"]);
+      if (result.autoScrollSpeedIndex !== undefined) {
+        this.currentSpeedIndex = result.autoScrollSpeedIndex;
+      }
+      
+      // Update UI
+      const speedSlider = document.getElementById("speed-slider");
+      const speedDisplay = document.getElementById("speed-display");
+      speedSlider.value = this.currentSpeedIndex;
+      speedDisplay.textContent = this.speedLevels[this.currentSpeedIndex].display;
+    } catch (error) {
+      console.log("No speed preference found:", error);
+    }
+  }
+
+  async updateContentScriptSpeed() {
+    try {
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+
+      if (tab && this.isTwitterPage(tab.url)) {
+        await chrome.tabs.sendMessage(tab.id, {
+          action: "updateAutoScrollSpeed",
+          speedIndex: this.currentSpeedIndex,
+        });
+      }
+    } catch (error) {
+      console.log("Error updating content script speed:", error);
+    }
+  }
+
+  toggleSpeedSelectorVisibility(show) {
+    const speedSelector = document.getElementById("speed-selector");
+    if (show) {
+      speedSelector.classList.add("visible");
+    } else {
+      speedSelector.classList.remove("visible");
+    }
   }
 }
 

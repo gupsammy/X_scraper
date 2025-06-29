@@ -15,12 +15,17 @@ class AutoScroller {
     this.lastAPICallTime = 0;
     this.apiCallCount = 0;
 
-    // Progressive speed management
-    this.baseWaitTime = this.waitTime;
-    this.baseDelay = config.baseDelay || 1000;
-    this.currentSpeedMultiplier = 1.0;
-    this.maxSpeedMultiplier = 4.0; // Can get up to 4x faster
-    this.successiveSuccesses = 0;
+    // Hardcoded speed configurations for exact timing
+    this.speedConfigs = [
+      { waitTime: 600, baseDelay: 21300, display: "1/32x (Slowest)" }, // 22400ms total
+      { waitTime: 500, baseDelay: 10200, display: "1/16x" },           // 11200ms total  
+      { waitTime: 400, baseDelay: 4700, display: "1/8x" },             // 5600ms total
+      { waitTime: 300, baseDelay: 2000, display: "1/4x" },             // 2800ms total
+      { waitTime: 200, baseDelay: 700, display: "1/2x" },              // 1400ms total
+      { waitTime: 100, baseDelay: 100, display: "1x (Max)" }           // 700ms total
+    ];
+    this.currentSpeedIndex = config.speedIndex || 5; // Default to max speed (1x)
+    this.applySpeedConfig();
     this.recentAPIResponses = [];
 
     // Timers and intervals
@@ -56,9 +61,7 @@ class AutoScroller {
     this.lastAPICallTime = Date.now();
     this.apiCallCount = 0;
 
-    // Reset progressive speed state for new session
-    this.currentSpeedMultiplier = 1.0;
-    this.successiveSuccesses = 0;
+    // Reset API response tracking for new session
     this.recentAPIResponses = [];
 
     // Apply context-aware configuration
@@ -167,14 +170,19 @@ class AutoScroller {
   waitForNewContent() {
     if (!this.isActive) return;
 
+    // Use hardcoded waitTime from current speed config
+    const speedConfig = this.speedConfigs[this.currentSpeedIndex];
+    const waitTime = speedConfig.waitTime;
+
     debugLog("Waiting for new content...", {
-      waitTime: this.waitTime,
+      waitTime: waitTime,
       retryCount: this.retryCount,
+      speedIndex: this.currentSpeedIndex,
     });
 
     this.waitTimer = setTimeout(() => {
       this.checkForNewContent();
-    }, this.waitTime);
+    }, waitTime);
   }
 
   checkForNewContent() {
@@ -194,22 +202,18 @@ class AutoScroller {
     });
 
     if (heightChanged || recentAPIActivity) {
-      // New content detected - increase speed progressively
+      // New content detected
       debugLog("New content detected, resetting retry count");
       this.retryCount = 0;
       this.lastScrollHeight = currentHeight;
-      this.successiveSuccesses++;
-      this.updateSpeedBasedOnSuccess();
       this.scheduleNextScroll();
     } else {
-      // No new content - slow down and retry
+      // No new content - retry with same speed
       this.retryCount++;
-      this.successiveSuccesses = 0; // Reset success streak
-      this.updateSpeedBasedOnFailure();
       debugLog(
         `No new content, retry ${this.retryCount}/${
           this.maxRetries
-        }, speed: ${this.currentSpeedMultiplier.toFixed(2)}x`
+        }, speed: ${this.speedConfigs[this.currentSpeedIndex].display}`
       );
 
       if (this.retryCount >= this.maxRetries) {
@@ -217,7 +221,7 @@ class AutoScroller {
         debugLog("Max retries reached, stopping auto-scroll");
         this.stop("end_reached");
       } else {
-        // Try again with current speed
+        // Try again with same speed
         this.scheduleNextScroll();
       }
     }
@@ -229,61 +233,21 @@ class AutoScroller {
   }
 
   getScrollDelay() {
-    // Context-aware scroll timing with progressive speed
-    const baseDelay = this.baseDelay;
+    // Use hardcoded speed configuration for exact timing
     const retryMultiplier = Math.pow(1.5, this.retryCount); // Exponential backoff for retries
-
-    const contextConfig = this.getContextConfig();
-    const contextMultiplier = contextConfig.speedMultiplier;
-
-    // Apply progressive speed (lower multiplier = faster scrolling)
-    const speedAdjustedDelay = this.baseWaitTime / this.currentSpeedMultiplier;
+    
+    // Get current speed config
+    const speedConfig = this.speedConfigs[this.currentSpeedIndex];
+    const baseDelay = speedConfig.baseDelay;
 
     const finalDelay = Math.min(
-      Math.max(baseDelay, speedAdjustedDelay) *
-        retryMultiplier *
-        contextMultiplier,
-      10000 // Max 10 seconds
+      baseDelay * retryMultiplier,
+      30000 // Max 30 seconds for very slow speeds
     );
 
     return finalDelay;
   }
 
-  updateSpeedBasedOnSuccess() {
-    // Increase speed progressively with each success
-    const speedIncrement = 0.2; // Increase by 0.2x each success
-    const accelerationThreshold = 3; // Start accelerating after 3 successes
-
-    if (this.successiveSuccesses >= accelerationThreshold) {
-      this.currentSpeedMultiplier = Math.min(
-        this.currentSpeedMultiplier + speedIncrement,
-        this.maxSpeedMultiplier
-      );
-
-      debugLog(
-        `Speed increased to ${this.currentSpeedMultiplier.toFixed(2)}x after ${
-          this.successiveSuccesses
-        } successes`
-      );
-    }
-  }
-
-  updateSpeedBasedOnFailure() {
-    // Reduce speed when content loading fails
-    const speedReduction = 0.3; // Reduce by 0.3x on failure
-    const minSpeedMultiplier = 0.5; // Don't go below 0.5x (2x slower than base)
-
-    this.currentSpeedMultiplier = Math.max(
-      this.currentSpeedMultiplier - speedReduction,
-      minSpeedMultiplier
-    );
-
-    debugLog(
-      `Speed reduced to ${this.currentSpeedMultiplier.toFixed(
-        2
-      )}x due to no content`
-    );
-  }
 
   getContextConfig() {
     if (!this.pageContext) {
@@ -370,7 +334,7 @@ class AutoScroller {
       url: url.substring(0, 100) + "...",
       responseLength: responseText?.length,
       callCount: this.apiCallCount,
-      currentSpeed: this.currentSpeedMultiplier.toFixed(2) + "x",
+      currentSpeed: this.speedConfigs[this.currentSpeedIndex].display,
     });
 
     // Notify of API activity
@@ -378,7 +342,7 @@ class AutoScroller {
       apiType,
       callCount: this.apiCallCount,
       timestamp: this.lastAPICallTime,
-      currentSpeed: this.currentSpeedMultiplier,
+      currentSpeed: this.speedConfigs[this.currentSpeedIndex].display,
     });
   }
 
@@ -391,8 +355,7 @@ class AutoScroller {
           maxRetries: this.maxRetries,
           apiCallCount: this.apiCallCount,
           scrollHeight: document.body.scrollHeight,
-          currentSpeed: this.currentSpeedMultiplier,
-          successiveSuccesses: this.successiveSuccesses,
+          currentSpeed: this.speedConfigs[this.currentSpeedIndex].display,
         });
       }
     }, 1000); // Update every second
@@ -427,11 +390,29 @@ class AutoScroller {
   // Update configuration
   updateConfig(newConfig) {
     this.scrollDistance = newConfig.scrollDistance || this.scrollDistance;
-    this.waitTime = newConfig.waitTime || this.waitTime;
     this.maxRetries = newConfig.maxRetries || this.maxRetries;
     this.pageContext = newConfig.pageContext || this.pageContext;
+    
+    if (newConfig.speedIndex !== undefined) {
+      this.currentSpeedIndex = newConfig.speedIndex;
+      this.applySpeedConfig();
+    }
 
     debugLog("AutoScroller config updated:", newConfig);
+  }
+
+  // Update speed by index
+  updateSpeed(speedIndex) {
+    this.currentSpeedIndex = speedIndex;
+    this.applySpeedConfig();
+    debugLog(`Speed updated to ${this.speedConfigs[speedIndex].display}`);
+  }
+
+  // Apply current speed configuration
+  applySpeedConfig() {
+    const config = this.speedConfigs[this.currentSpeedIndex];
+    this.waitTime = config.waitTime;
+    this.baseDelay = config.baseDelay;
   }
 
   // Get current status
@@ -445,9 +426,8 @@ class AutoScroller {
       lastAPICallTime: this.lastAPICallTime,
       scrollHeight: document.body.scrollHeight,
       pageContext: this.pageContext,
-      currentSpeed: this.currentSpeedMultiplier,
-      successiveSuccesses: this.successiveSuccesses,
-      baseWaitTime: this.baseWaitTime,
+      currentSpeed: this.speedConfigs[this.currentSpeedIndex].display,
+      currentSpeedIndex: this.currentSpeedIndex,
       currentWaitTime: this.getScrollDelay(),
     };
   }
