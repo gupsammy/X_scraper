@@ -33,8 +33,9 @@ function detectPageContext() {
     };
   }
 
-  // Check for user profile (e.g., /username but not /username/status/xxx)
-  const userProfileMatch = pathname.match(/^\/([^\/]+)$/);
+  // Check for user profile (e.g., /username or /username/ but not /username/status/xxx)
+  // Allow optional trailing slash which previous regex failed to match
+  const userProfileMatch = pathname.match(/^\/([^\/]+)\/?$/);
   if (
     userProfileMatch &&
     !pathname.includes("/status/") &&
