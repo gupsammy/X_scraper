@@ -1370,6 +1370,16 @@ body {
   cursor: not-allowed;
 }
 
+.filter-input.invalid {
+  border-color: var(--error-500);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.filter-input.invalid:focus {
+  border-color: var(--error-500);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
 .setting-help {
   font-size: 0.75rem;
   color: var(--neutral-500);

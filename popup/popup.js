@@ -41,8 +41,12 @@ class TwitterCollectorPopup {
       await this.loadAutoScrollPreference();
       await this.loadSpeedPreference();
 
-      // TODO: Load filter preference from storage
+      // Load filter preference from storage
       await this.loadFilterPreference();
+
+      // Set initial filter state based on auto-scroll preference
+      const autoScrollToggle = document.getElementById("auto-scroll-toggle");
+      this.toggleFilterEnabled(!autoScrollToggle.checked);
 
       // Set up message listeners for real-time updates
       this.setupMessageListeners();
@@ -100,8 +104,30 @@ class TwitterCollectorPopup {
       this.updateSpeedSelection(parseInt(e.target.value));
     });
 
-    // TODO: Add filter input event listener
-    // TODO: Add advanced settings collapse/expand listener
+    // Advanced settings toggle
+    const advancedSettings = document.getElementById("advanced-settings");
+    advancedSettings.addEventListener("toggle", (e) => {
+      this.onAdvancedSettingsToggle(e.target.open);
+    });
+
+    // Filter input
+    const filterInput = document.getElementById("filter-input");
+    filterInput.addEventListener("input", (e) => {
+      this.onFilterInputChange(e.target.value);
+    });
+
+    filterInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        // Trigger capture if valid
+        if (
+          !this.isCapturing &&
+          !document.getElementById("capture-btn").disabled
+        ) {
+          this.toggleCapture();
+        }
+      }
+    });
   }
 
   setupMessageListeners() {
@@ -633,6 +659,9 @@ class TwitterCollectorPopup {
       // Show/hide speed selector
       this.toggleSpeedSelectorVisibility(isEnabled);
 
+      // Enable/disable filter input based on auto-scroll state
+      this.toggleFilterEnabled(!isEnabled);
+
       // Send preference to content script with current speed setting
       const message = {
         action: "setAutoScrollPreference",
@@ -849,17 +878,88 @@ class TwitterCollectorPopup {
     }
   }
 
-  // TODO: Add filter-related methods
+  // Advanced Settings Management
+  onAdvancedSettingsToggle(isOpen) {
+    // Update chevron rotation is handled by CSS
+    // Could add analytics or state persistence here
+    console.log("Advanced settings", isOpen ? "opened" : "closed");
+  }
+
+  onFilterInputChange(value) {
+    this.filterRegex = value.trim();
+
+    // Visual feedback for regex validation
+    const filterInput = document.getElementById("filter-input");
+    filterInput.classList.remove("invalid");
+
+    if (this.filterRegex) {
+      try {
+        // Test regex compilation
+        new RegExp(this.filterRegex, "i");
+        // Valid regex - could add visual feedback
+      } catch (error) {
+        // Invalid regex - add visual feedback
+        filterInput.classList.add("invalid");
+        console.log("Invalid regex:", error.message);
+      }
+    }
+
+    // Save to storage
+    this.saveFilterPreference(this.filterRegex);
+  }
+
   async loadFilterPreference() {
-    // Load saved filter regex from storage
+    try {
+      const result = await chrome.storage.local.get(["advancedFilterValue"]);
+      if (result.advancedFilterValue) {
+        this.filterRegex = result.advancedFilterValue;
+        const filterInput = document.getElementById("filter-input");
+        if (filterInput) {
+          filterInput.value = this.filterRegex;
+        }
+      }
+    } catch (error) {
+      console.log("No filter preference found:", error);
+    }
+  }
+
+  async saveFilterPreference(filterValue) {
+    try {
+      await chrome.storage.local.set({ advancedFilterValue: filterValue });
+    } catch (error) {
+      console.log("Error saving filter preference:", error);
+    }
   }
 
   validateFilterRegex(regexString) {
-    // Validate regex string and return compiled RegExp or null
+    if (!regexString || regexString.trim() === "") {
+      return { isValid: true, regex: null, error: null };
+    }
+
+    try {
+      const compiledRegex = new RegExp(regexString.trim(), "i");
+      return { isValid: true, regex: compiledRegex, error: null };
+    } catch (error) {
+      return { isValid: false, regex: null, error: error.message };
+    }
   }
 
   toggleFilterEnabled(enabled) {
-    // Enable/disable filter input based on auto-scroll state
+    const filterInput = document.getElementById("filter-input");
+    const settingHelp = filterInput.nextElementSibling;
+
+    if (enabled) {
+      filterInput.disabled = false;
+      filterInput.placeholder =
+        "Regex or keywords (e.g., chatgpt, *open-source*)";
+      settingHelp.textContent = "Only capture tweets matching this pattern";
+    } else {
+      filterInput.disabled = true;
+      filterInput.placeholder =
+        "Filtering disabled when auto-scroll is enabled";
+      settingHelp.textContent =
+        "Auto-scroll captures all tweets for performance";
+    }
   }
 }
 
