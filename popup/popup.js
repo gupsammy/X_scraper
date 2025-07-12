@@ -412,6 +412,17 @@ class TwitterCollectorPopup {
       });
 
       if (response && response.success) {
+        // Persist the active filter so a page reload (triggered below) can
+        // be recovered by the new content-script without depending on timing
+        // of background messages.
+        try {
+          await chrome.storage.local.set({
+            activeFilterForCapture: filterRegex || null,
+          });
+        } catch (e) {
+          console.warn("Failed saving activeFilterForCapture", e);
+        }
+
         this.isCapturing = true;
         this.updateCaptureButton();
         this.showProgressSection();
@@ -425,7 +436,10 @@ class TwitterCollectorPopup {
         }
         this.showToast(message, "success");
 
-        // Refresh the page so that new API calls are triggered and interception starts immediately
+        // Refresh the page so that new API calls are guaranteed.  The
+        // background process stores `filterRegex` and re-injects it when the
+        // page finishes loading, so the filter context is preserved even
+        // across this reload.
         chrome.tabs.reload(tab.id);
 
         // Start periodic updates

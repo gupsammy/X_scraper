@@ -539,9 +539,10 @@ body {
 
 /* Speed Selector */
 .speed-selector {
-  display: none; /* Hidden by default, shown when auto-scroll is enabled */
+  display: block;
 }
 
+/* retain .visible class for backward compatibility (no-op) */
 .speed-selector.visible {
   display: block;
 }

@@ -81,6 +81,23 @@ class TwitterCollectorContentScript {
       // Check for auto-scroll preference from storage
       await this.checkAutoScrollPreference();
 
+      // Automatically resume a capture if the popup triggered a reload and
+      // stored an active filter for the session.
+      try {
+        const { activeFilterForCapture } = await chrome.storage.local.get([
+          "activeFilterForCapture",
+        ]);
+        if (activeFilterForCapture) {
+          debugLog(
+            "Found stored activeFilterForCapture – resuming capture:",
+            activeFilterForCapture
+          );
+          this.startCapture(activeFilterForCapture);
+        }
+      } catch (e) {
+        debugLog("Error reading activeFilterForCapture", e);
+      }
+
       // Ask background if capture should resume (e.g., after page reload)
       chrome.runtime.sendMessage({ type: "getCaptureStatus" }, (response) => {
         if (response && response.isCapturing) {
@@ -224,10 +241,13 @@ class TwitterCollectorContentScript {
       );
 
       // Apply regex filtering here (after deduplication, before persistence)
-      const filteredTweets =
-        this.activeFilterRE && !this.autoScrollPreference
-          ? newTweets.filter((tweet) => this.testTweetAgainstFilter(tweet))
-          : newTweets;
+      // Once a filter regex has been compiled for the current capture session
+      // we always apply it – even if the auto-scroll flag flips later.  This
+      // prevents the timing issue where autoScrollPreference might be toggled
+      // *after* the regex was compiled, causing the filter to be skipped.
+      const filteredTweets = this.activeFilterRE
+        ? newTweets.filter((tweet) => this.testTweetAgainstFilter(tweet))
+        : newTweets;
 
       debugLog(
         `${filteredTweets.length} tweets after filtering (${
@@ -433,8 +453,9 @@ class TwitterCollectorContentScript {
         return;
       }
 
-      // Compile filter regex if provided
-      if (filterRegex && !this.autoScrollPreference) {
+      // Compile filter regex if provided (popup ensures it is omitted when
+      // auto-scroll is enabled).  No additional gating needed here.
+      if (filterRegex) {
         try {
           this.activeFilterRE = new RegExp(filterRegex, "i");
           this.filterRegex = filterRegex;
@@ -446,9 +467,6 @@ class TwitterCollectorContentScript {
       } else {
         this.activeFilterRE = null;
         this.filterRegex = null;
-        if (filterRegex && this.autoScrollPreference) {
-          debugLog("Filter ignored because auto-scroll is enabled");
-        }
       }
 
       debugLog("Starting capture for:", context);
@@ -473,9 +491,17 @@ class TwitterCollectorContentScript {
       this.startStatsUpdateInterval();
 
       // Notify popup
+      // Include filter and auto-scroll state in the event payload so that the
+      // background script can correctly resume a filtered capture after the
+      // tab reloads.  This prevents the situation where the page reloads,
+      // background resumes capture, but the newly-created content script has
+      // no knowledge of the previously-active filter and therefore captures
+      // every tweet.
       this.notifyPopup("captureStarted", {
         context,
         sessionId: this.currentSession,
+        filterRegex: this.filterRegex || null,
+        autoScrollEnabled: this.autoScrollPreference || false,
       });
 
       debugLog("Capture started successfully");
@@ -526,6 +552,13 @@ class TwitterCollectorContentScript {
         tweetCount: this.capturedTweetIds.size,
         sessionId: this.currentSession,
       });
+
+      // Clear any persisted filter so the next session starts fresh
+      try {
+        await chrome.storage.local.remove("activeFilterForCapture");
+      } catch (e) {
+        debugLog("Failed to clear activeFilterForCapture", e);
+      }
 
       this.currentSession = null;
 

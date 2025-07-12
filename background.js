@@ -39,8 +39,12 @@ class TwitterCollectorBackground {
       if (changeInfo.status === "complete" && this.activeCaptures[tabId]) {
         // Ensure it's still a Twitter page
         if (this.isTwitterPage(tab.url)) {
-          console.log("Tab reloaded, resuming capture:", tab.url);
-          this.sendMessageToContentScript(tabId, { action: "startCapture" });
+          const captureInfo = this.activeCaptures[tabId];
+          console.log("Tab reloaded, resuming capture:", tab.url, captureInfo);
+          this.sendMessageToContentScript(tabId, {
+            action: "startCapture",
+            filterRegex: captureInfo?.filterRegex || null,
+          });
         }
       }
     });
@@ -155,15 +159,23 @@ class TwitterCollectorBackground {
     console.log("Background received message:", message);
 
     switch (message.type) {
-      case "captureStarted":
+      case "captureStarted": {
         console.log("Capture started:", message.data);
         if (sender.tab && sender.tab.id != null) {
+          // Persist context and filtering information so that we can
+          // accurately resume the same capture session after the user reloads
+          // the page.  Without storing the filter, the resumed capture would
+          // default to capturing *all* tweets which is not what the user
+          // expects.
           this.activeCaptures[sender.tab.id] = {
             context: message.data?.context || null,
+            filterRegex: message.data?.filterRegex || null,
+            autoScrollEnabled: message.data?.autoScrollEnabled || false,
           };
         }
         // Could show notification here
         break;
+      }
 
       case "captureStopped":
         console.log("Capture stopped:", message.data);
