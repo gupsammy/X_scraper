@@ -101,6 +101,12 @@ class TwitterCollectorPopup {
     advSettings.addEventListener("toggle", (e) => {
       this.saveAdvancedSettingsState(e.target.open);
     });
+
+    // Filter input
+    const filterInput = document.getElementById("filter-input");
+    filterInput.addEventListener("input", (e) => {
+      this.saveFilterValue(e.target.value);
+    });
   }
 
   setupMessageListeners() {
@@ -362,12 +368,28 @@ class TwitterCollectorPopup {
         return;
       }
 
-      // TODO: Advanced Filtering - Add filterRegex validation and pass to startCapture
-      // TODO: Advanced Filtering - Get regex value from advanced settings input
-      // TODO: Advanced Filtering - Validate regex before sending, show toast on error
+      // Get filter value and validate regex
+      const filterInput = document.getElementById("filter-input");
+      const filterValue = filterInput.value.trim();
+      let filterRegex = null;
+
+      // Validate regex if provided
+      if (filterValue) {
+        try {
+          // Test the regex to ensure it's valid
+          new RegExp(filterValue, "i");
+          filterRegex = filterValue;
+        } catch (error) {
+          // Show error toast and shake input
+          this.showToast("Invalid regular expression: " + error.message, "error");
+          this.shakeInput(filterInput);
+          return;
+        }
+      }
+
       const response = await chrome.tabs.sendMessage(tab.id, {
         action: "startCapture",
-        // TODO: Advanced Filtering - Add filterRegex parameter here
+        filterRegex: filterRegex
       });
 
       if (response && response.success) {
@@ -852,6 +874,21 @@ class TwitterCollectorPopup {
     } catch (error) {
       console.log("Error saving advanced settings state:", error);
     }
+  }
+
+  async saveFilterValue(value) {
+    try {
+      await chrome.storage.local.set({ advancedFilterValue: value });
+    } catch (error) {
+      console.log("Error saving filter value:", error);
+    }
+  }
+
+  shakeInput(inputElement) {
+    inputElement.classList.add("shake-error");
+    setTimeout(() => {
+      inputElement.classList.remove("shake-error");
+    }, 600);
   }
 
   async updateContentScriptSpeed() {
