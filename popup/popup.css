@@ -1380,6 +1380,17 @@ body {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
+.filter-input.filter-active {
+  border-color: var(--success-500);
+  background: var(--success-50);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.filter-input.filter-active:focus {
+  border-color: var(--success-500);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
 .setting-help {
   font-size: 0.75rem;
   color: var(--neutral-500);

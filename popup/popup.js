@@ -387,22 +387,41 @@ class TwitterCollectorPopup {
         return;
       }
 
-      // TODO: Validate filter regex before starting capture
-      // TODO: Pass filterRegex in the message
+      // Validate filter regex before starting capture
+      let filterRegex = null;
+      const autoScrollToggle = document.getElementById("auto-scroll-toggle");
+
+      if (!autoScrollToggle.checked && this.filterRegex) {
+        const validation = this.validateFilterRegex(this.filterRegex);
+        if (!validation.isValid) {
+          this.showToast("Invalid filter regex: " + validation.error, "error");
+          // Highlight the invalid input
+          const filterInput = document.getElementById("filter-input");
+          filterInput.classList.add("invalid");
+          filterInput.focus();
+          return;
+        }
+        filterRegex = this.filterRegex;
+      }
 
       const response = await chrome.tabs.sendMessage(tab.id, {
         action: "startCapture",
-        // TODO: Add filterRegex: this.filterRegex
+        filterRegex: filterRegex,
       });
 
       if (response && response.success) {
         this.isCapturing = true;
         this.updateCaptureButton();
         this.showProgressSection();
-        this.showToast(
-          "Capture started! Scroll to load more tweets.",
-          "success"
-        );
+
+        // Show appropriate success message based on filtering state
+        let message = "Capture started! Scroll to load more tweets.";
+        if (filterRegex) {
+          message = `Capture started with filter: "${filterRegex}"`;
+        } else if (autoScrollToggle.checked) {
+          message = "Auto-scroll capture started!";
+        }
+        this.showToast(message, "success");
 
         // Refresh the page so that new API calls are triggered and interception starts immediately
         chrome.tabs.reload(tab.id);
@@ -495,6 +514,9 @@ class TwitterCollectorPopup {
     // Add capture active styling to speed selector
     const speedSelector = document.getElementById("speed-selector");
     speedSelector.classList.add("capture-active");
+
+    // Show filter indicator if filtering is active
+    this.updateFilterIndicator();
   }
 
   onCaptureStopped(data) {
@@ -510,6 +532,9 @@ class TwitterCollectorPopup {
     // Remove capture active styling from speed selector
     const speedSelector = document.getElementById("speed-selector");
     speedSelector.classList.remove("capture-active");
+
+    // Hide filter indicator
+    this.updateFilterIndicator();
 
     // Reload statistics
     this.loadStatistics();
@@ -959,6 +984,20 @@ class TwitterCollectorPopup {
         "Filtering disabled when auto-scroll is enabled";
       settingHelp.textContent =
         "Auto-scroll captures all tweets for performance";
+    }
+  }
+
+  updateFilterIndicator() {
+    const filterInput = document.getElementById("filter-input");
+    const autoScrollToggle = document.getElementById("auto-scroll-toggle");
+
+    // Add/remove visual indicator when filtering is active
+    if (this.isCapturing && !autoScrollToggle.checked && this.filterRegex) {
+      filterInput.classList.add("filter-active");
+      filterInput.title = `Filtering active: ${this.filterRegex}`;
+    } else {
+      filterInput.classList.remove("filter-active");
+      filterInput.title = "Enter keywords or regex pattern to filter tweets";
     }
   }
 }
