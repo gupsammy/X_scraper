@@ -14,6 +14,8 @@ class TwitterCollectorContentScript {
     this.firstAPICaptured = false;
     // History of recent API calls for rate-limit tracking (keeps ~1 min)
     this.apiHistory = []; // [{ ts: epochMillis, tweets: number }]
+    // Advanced filtering
+    this.activeFilterRE = null; // Compiled regex for filtering tweets
 
     // Listen for posted messages from injected script
     window.addEventListener("message", (event) => {
@@ -219,11 +221,20 @@ class TwitterCollectorContentScript {
         (tweet) => !this.capturedTweetIds.has(tweet.id)
       );
 
-      // TODO: Advanced Filtering - Apply regex filter after deduplication but before storage
-      // TODO: Advanced Filtering - Only filter when auto-scroll is disabled
-      // const filteredTweets = this.activeFilterRE && !this.autoScrollPreference
-      //   ? newTweets.filter(t => this.activeFilterRE.test(t.full_text || t.text))
-      //   : newTweets;
+      // Apply regex filter after deduplication but before storage
+      // Only filter when auto-scroll is disabled (per PRD requirement)
+      const filteredTweets = this.activeFilterRE && !this.autoScrollPreference
+        ? newTweets.filter(tweet => {
+            const tweetText = tweet.full_text || tweet.text || "";
+            const matches = this.activeFilterRE.test(tweetText);
+            if (!matches) {
+              debugLog(`Tweet filtered out by regex: "${tweetText.substring(0, 50)}..."`);
+            }
+            return matches;
+          })
+        : newTweets;
+
+      debugLog(`Filtered ${newTweets.length} → ${filteredTweets.length} tweets (filter: ${this.activeFilterRE ? 'active' : 'none'}, auto-scroll: ${this.autoScrollPreference})`);
 
       // --------------------------
       //  Rate-limit measurement
@@ -259,14 +270,14 @@ class TwitterCollectorContentScript {
         // Silently ignore any stats errors so we never break capture flow
       }
 
-      debugLog(`${newTweets.length} new tweets after duplicate filtering`);
-      if (newTweets.length === 0) {
-        debugLog("All tweets were duplicates");
+      debugLog(`${filteredTweets.length} tweets after deduplication and filtering`);
+      if (filteredTweets.length === 0) {
+        debugLog("No tweets to store (all were duplicates or filtered out)");
         return;
       }
 
       // Add session ID to tweets
-      newTweets.forEach((tweet) => {
+      filteredTweets.forEach((tweet) => {
         tweet.capture_session_id = this.currentSession;
         this.capturedTweetIds.add(tweet.id);
       });
@@ -277,7 +288,7 @@ class TwitterCollectorContentScript {
         await window.twitterDB.init();
       }
 
-      const result = await window.twitterDB.storeTweets(newTweets);
+      const result = await window.twitterDB.storeTweets(filteredTweets);
       debugLog(
         `Stored ${result.stored} new tweets, ${result.duplicates} duplicates`
       );
@@ -286,17 +297,17 @@ class TwitterCollectorContentScript {
       try {
         chrome.runtime.sendMessage({
           type: "storeTweets",
-          tweets: newTweets,
+          tweets: filteredTweets,
         });
       } catch (e) {
         debugLog("Failed to forward tweets to background DB", e);
       }
 
       // Update capture statistics
-      await this.updateCaptureStats(newTweets.length);
+      await this.updateCaptureStats(filteredTweets.length);
 
       // Notify popup of progress
-      this.notifyProgress(newTweets.length, sourceType);
+      this.notifyProgress(filteredTweets.length, sourceType);
 
       // Notify auto-scroller of API activity
       this.notifyAutoScrollerOfAPIActivity(url, responseText, sourceType);
@@ -327,8 +338,21 @@ class TwitterCollectorContentScript {
 
       switch (message.action) {
         case "startCapture":
-          // TODO: Advanced Filtering - Accept filterRegex parameter from message
-          // TODO: Advanced Filtering - Compile regex once and store in this.activeFilterRE
+          // Accept filterRegex parameter and compile it
+          if (message.filterRegex) {
+            try {
+              this.activeFilterRE = new RegExp(message.filterRegex, "i");
+              debugLog("Filter regex compiled:", message.filterRegex);
+            } catch (error) {
+              debugLog("Error compiling filter regex:", error);
+              sendResponse({ success: false, error: "Invalid regex" });
+              return;
+            }
+          } else {
+            this.activeFilterRE = null;
+            debugLog("No filter regex provided, capturing all tweets");
+          }
+          
           this.startCapture();
           sendResponse({ success: true });
           break;
@@ -471,6 +495,9 @@ class TwitterCollectorContentScript {
       }
 
       this.isCapturing = false;
+
+      // Clear filter regex
+      this.activeFilterRE = null;
 
       // Stop stats updates
       if (this.statsUpdateInterval) {
