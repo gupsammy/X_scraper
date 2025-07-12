@@ -6,6 +6,7 @@ A Chrome extension that captures and stores Twitter bookmarks and user tweets lo
 
 - 🔖 **Capture Twitter Bookmarks** - Automatically save your bookmarked tweets
 - 👤 **Capture User Tweets** - Save tweets from any user's profile
+- 🎯 **Advanced Filtering** - Filter tweets during capture using keywords or regex patterns
 - 🔍 **Smart Page Detection** - Automatically detects bookmark pages vs user profiles
 - 💾 **Local Storage** - All data stored securely in your browser's IndexedDB
 - 📊 **Data Viewer** - Beautiful interface to view, search, and filter captured tweets
@@ -44,6 +45,36 @@ A Chrome extension that captures and stores Twitter bookmarks and user tweets lo
    - Filter by source (bookmarks, profiles, search)
    - Search tweet content, authors, or usernames
    - Sort by date, likes, retweets, etc.
+
+### Advanced Filtering (New!)
+
+You can now filter tweets **during capture** to only save tweets that match specific criteria:
+
+1. **Click the extension icon** and expand "Advanced Settings"
+2. **Enter a filter pattern** in the "Advanced Search" field:
+
+   - **Simple keywords**: `chatgpt` (captures tweets containing "chatgpt")
+   - **Multiple terms**: `claude|gpt|ai` (captures tweets with any of these words)
+   - **Exact phrases**: `"open source"` (captures tweets with this exact phrase)
+   - **Regex patterns**: `\b(AI|ML|LLM)\b` (captures tweets with these acronyms as whole words)
+
+3. **Start capturing** - only matching tweets will be saved
+
+**Important Notes**:
+
+- Filtering is **disabled when auto-scroll is enabled** for performance
+- Filters are case-insensitive by default
+- Invalid regex patterns will show an error before capture starts
+- Empty filter captures all tweets (normal behavior)
+
+**Example Patterns**:
+
+```
+bitcoin|crypto|ethereum    # Crypto-related tweets
+@elonmusk|spacex          # Tweets mentioning Elon or SpaceX
+\$[A-Z]{1,5}\b           # Stock ticker symbols ($AAPL, $TSLA)
+#\w+                     # Tweets with hashtags
+```
 
 ### Additional Features
 
