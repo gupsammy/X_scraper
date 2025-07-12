@@ -1,8 +1,8 @@
 // Tweet Card Component - Compact, responsive tweet card
-import { formatDate, formatNumber, truncateText } from '../utils/formatters.js';
-import { processTextLinks } from '../utils/textProcessor.js';
-import { TweetMedia } from './TweetMedia.js';
-import { QuotedTweet } from './QuotedTweet.js';
+import { formatDate, formatNumber, truncateText } from "../utils/formatters.js";
+import { processTextLinks } from "../utils/textProcessor.js";
+import { TweetMedia } from "./TweetMedia.js";
+import { QuotedTweet } from "./QuotedTweet.js";
 
 export class TweetCard {
   constructor(tweet, options = {}) {
@@ -13,26 +13,26 @@ export class TweetCard {
       isReply: false,
       isMainTweet: false,
       conversationMode: false,
-      ...options
+      ...options,
     };
     this.element = null;
   }
 
   render() {
     this.element = document.createElement("article");
-    let className = `tweet-card ${this.options.compact ? 'compact' : ''}`;
-    
+    let className = `tweet-card ${this.options.compact ? "compact" : ""}`;
+
     // Add conversation-specific classes
     if (this.options.conversationMode) {
-      className += ' conversation-tweet';
+      className += " conversation-tweet";
       if (this.options.isReply) {
-        className += ' reply-tweet';
+        className += " reply-tweet";
       }
       if (this.options.isMainTweet) {
-        className += ' main-tweet';
+        className += " main-tweet";
       }
     }
-    
+
     this.element.className = className;
     this.element.dataset.tweetId = this.tweet.id;
 
@@ -75,9 +75,17 @@ export class TweetCard {
     }
 
     // Render media if present
-    if (this.tweet.has_media && this.tweet.media_info && this.tweet.media_info.length > 0) {
-      const mediaContainer = this.element.querySelector('.tweet-media');
-      const mediaRenderer = new TweetMedia(mediaContainer, this.tweet.media_info, this.tweet);
+    if (
+      this.tweet.has_media &&
+      this.tweet.media_info &&
+      this.tweet.media_info.length > 0
+    ) {
+      const mediaContainer = this.element.querySelector(".tweet-media");
+      const mediaRenderer = new TweetMedia(
+        mediaContainer,
+        this.tweet.media_info,
+        this.tweet
+      );
       mediaRenderer.render();
     }
 
@@ -88,13 +96,17 @@ export class TweetCard {
   }
 
   renderAuthorSection() {
-    const authorProfileUrl = `https://x.com/${this.tweet.author_screen_name || "unknown"}`;
-    
+    const authorProfileUrl = `https://x.com/${
+      this.tweet.author_screen_name || "unknown"
+    }`;
+
     return `
       <div class="tweet-author">
         <a href="${authorProfileUrl}" target="_blank" rel="noopener noreferrer" class="author-avatar-link">
           <img 
-            src="${this.tweet.author_profile_image_url || "../icons/icon48.png"}" 
+            src="${
+              this.tweet.author_profile_image_url || "../icons/icon48.png"
+            }" 
             alt="${this.tweet.author_name || "Unknown"}" 
             class="author-avatar"
             loading="lazy"
@@ -105,20 +117,46 @@ export class TweetCard {
             <a href="${authorProfileUrl}" target="_blank" rel="noopener noreferrer" class="author-name">
               ${this.tweet.author_name || "Unknown User"}
             </a>
-            ${this.tweet.author_verified ? '<span class="verified-badge">✓</span>' : ''}
+            ${
+              this.tweet.author_verified
+                ? '<span class="verified-badge">✓</span>'
+                : ""
+            }
           </div>
-          <div class="author-handle">@${this.tweet.author_screen_name || "unknown"}</div>
+          <div class="author-handle">@${
+            this.tweet.author_screen_name || "unknown"
+          }</div>
         </div>
       </div>
     `;
   }
 
   renderMetaSection() {
+    // Build tags markup (supports both array and single string properties)
+    let tags = [];
+    if (Array.isArray(this.tweet.tags)) {
+      tags = this.tweet.tags;
+    } else if (this.tweet.filter_regex) {
+      tags = [this.tweet.filter_regex];
+    }
+
+    const tagsHtml = tags
+      .filter((tag) => tag && tag.trim() !== "")
+      .map((tag) => `<span class="tag-badge" title="Filter tag">${tag}</span>`) // Escape tag? assume safe
+      .join("");
+
     return `
       <div class="tweet-meta">
         <span class="tweet-date">${formatDate(this.tweet.created_at)}</span>
-        <span class="source-badge ${this.tweet.source_category}">${this.tweet.source_category}</span>
-        ${this.tweet.is_pinned ? '<span class="pinned-badge">📌 Pinned</span>' : ''}
+        <span class="source-badge ${this.tweet.source_category}">${
+      this.tweet.source_category
+    }</span>
+        ${tagsHtml}
+        ${
+          this.tweet.is_pinned
+            ? '<span class="pinned-badge">📌 Pinned</span>'
+            : ""
+        }
       </div>
     `;
   }
@@ -126,7 +164,7 @@ export class TweetCard {
   renderTextContent() {
     const fullText = this.tweet.full_text || "";
     const isLongText = fullText.length > 280;
-    
+
     if (this.options.compact && isLongText && !this.options.showFullText) {
       const truncated = truncateText(fullText, 200);
       return `
@@ -140,19 +178,21 @@ export class TweetCard {
     return `
       <div class="tweet-text">
         ${processTextLinks(fullText)}
-        ${isLongText && this.options.showFullText ? 
-          '<button class="read-less-btn" data-action="collapse">Show less</button>' : ''
+        ${
+          isLongText && this.options.showFullText
+            ? '<button class="read-less-btn" data-action="collapse">Show less</button>'
+            : ""
         }
       </div>
     `;
   }
 
   renderQuotedTweet() {
-    if (!this.tweet.quoted_tweet) return '';
+    if (!this.tweet.quoted_tweet) return "";
 
     const quotedTweetRenderer = new QuotedTweet(this.tweet.quoted_tweet);
     const quotedElement = quotedTweetRenderer.render();
-    
+
     // Return as string for innerHTML (we'll replace with actual element after)
     return '<div class="quoted-tweet-placeholder"></div>';
   }
@@ -178,14 +218,18 @@ export class TweetCard {
           </svg>
           ${formatNumber(this.tweet.like_count)}
         </span>
-        ${this.tweet.view_count ? `
+        ${
+          this.tweet.view_count
+            ? `
           <span class="stat views" title="Views">
             <svg viewBox="0 0 24 24" class="stat-icon">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
             </svg>
             ${formatNumber(this.tweet.view_count)}
           </span>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
     `;
   }
@@ -217,7 +261,9 @@ export class TweetCard {
   attachEventListeners() {
     // Handle quoted tweet placeholder replacement
     if (this.tweet.quoted_tweet) {
-      const placeholder = this.element.querySelector('.quoted-tweet-placeholder');
+      const placeholder = this.element.querySelector(
+        ".quoted-tweet-placeholder"
+      );
       if (placeholder) {
         const quotedTweetRenderer = new QuotedTweet(this.tweet.quoted_tweet);
         const quotedElement = quotedTweetRenderer.render();
@@ -226,11 +272,11 @@ export class TweetCard {
     }
 
     // Read more/less functionality
-    const readMoreBtn = this.element.querySelector('.read-more-btn');
-    const readLessBtn = this.element.querySelector('.read-less-btn');
-    
+    const readMoreBtn = this.element.querySelector(".read-more-btn");
+    const readLessBtn = this.element.querySelector(".read-less-btn");
+
     if (readMoreBtn) {
-      readMoreBtn.addEventListener('click', (e) => {
+      readMoreBtn.addEventListener("click", (e) => {
         e.preventDefault();
         this.options.showFullText = true;
         this.refreshTextContent();
@@ -238,7 +284,7 @@ export class TweetCard {
     }
 
     if (readLessBtn) {
-      readLessBtn.addEventListener('click', (e) => {
+      readLessBtn.addEventListener("click", (e) => {
         e.preventDefault();
         this.options.showFullText = false;
         this.refreshTextContent();
@@ -246,18 +292,18 @@ export class TweetCard {
     }
 
     // Copy link functionality
-    const copyBtn = this.element.querySelector('.copy-link');
+    const copyBtn = this.element.querySelector(".copy-link");
     if (copyBtn) {
-      copyBtn.addEventListener('click', (e) => {
+      copyBtn.addEventListener("click", (e) => {
         e.preventDefault();
         this.copyToClipboard(this.tweet.tweet_url);
       });
     }
 
     // Delete functionality
-    const deleteBtn = this.element.querySelector('.delete-tweet');
+    const deleteBtn = this.element.querySelector(".delete-tweet");
     if (deleteBtn) {
-      deleteBtn.addEventListener('click', (e) => {
+      deleteBtn.addEventListener("click", (e) => {
         e.preventDefault();
         this.deleteTweet();
       });
@@ -265,15 +311,17 @@ export class TweetCard {
   }
 
   refreshTextContent() {
-    const textContainer = this.element.querySelector('.tweet-text');
-    textContainer.innerHTML = this.renderTextContent().match(/<div class="tweet-text">(.*)<\/div>/s)[1];
-    
+    const textContainer = this.element.querySelector(".tweet-text");
+    textContainer.innerHTML = this.renderTextContent().match(
+      /<div class="tweet-text">(.*)<\/div>/s
+    )[1];
+
     // Re-attach text-related event listeners
-    const readMoreBtn = textContainer.querySelector('.read-more-btn');
-    const readLessBtn = textContainer.querySelector('.read-less-btn');
-    
+    const readMoreBtn = textContainer.querySelector(".read-more-btn");
+    const readLessBtn = textContainer.querySelector(".read-less-btn");
+
     if (readMoreBtn) {
-      readMoreBtn.addEventListener('click', (e) => {
+      readMoreBtn.addEventListener("click", (e) => {
         e.preventDefault();
         this.options.showFullText = true;
         this.refreshTextContent();
@@ -281,7 +329,7 @@ export class TweetCard {
     }
 
     if (readLessBtn) {
-      readLessBtn.addEventListener('click', (e) => {
+      readLessBtn.addEventListener("click", (e) => {
         e.preventDefault();
         this.options.showFullText = false;
         this.refreshTextContent();
@@ -290,7 +338,8 @@ export class TweetCard {
   }
 
   copyToClipboard(text) {
-    navigator.clipboard.writeText(text)
+    navigator.clipboard
+      .writeText(text)
       .then(() => {
         this.showToast("Link copied to clipboard!");
       })
@@ -305,16 +354,16 @@ export class TweetCard {
     }
 
     // Dispatch custom event to be handled by main app
-    const event = new CustomEvent('deleteTweet', {
-      detail: { tweetId: this.tweet.id }
+    const event = new CustomEvent("deleteTweet", {
+      detail: { tweetId: this.tweet.id },
     });
     document.dispatchEvent(event);
   }
 
   showToast(message, type = "success") {
     // Dispatch custom event to be handled by main app
-    const event = new CustomEvent('showToast', {
-      detail: { message, type }
+    const event = new CustomEvent("showToast", {
+      detail: { message, type },
     });
     document.dispatchEvent(event);
   }

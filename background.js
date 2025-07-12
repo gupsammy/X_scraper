@@ -27,8 +27,10 @@ class TwitterCollectorBackground {
       this.handleContextMenuClick(info, tab);
     });
 
+    // Ensure we propagate the return value from handleMessage so that
+    // asynchronous sendResponse calls keep the message port open.
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      this.handleMessage(message, sender, sendResponse);
+      return this.handleMessage(message, sender, sendResponse);
     });
 
     // Set up context menu

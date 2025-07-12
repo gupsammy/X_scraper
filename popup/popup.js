@@ -626,23 +626,39 @@ class TwitterCollectorPopup {
     try {
       this.showLoading(true);
 
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
+      // Send clear message to background script (same as data viewer)
+      const bgResponse = await new Promise((resolve, reject) => {
+        try {
+          chrome.runtime.sendMessage({ type: "clearAllData" }, (res) => {
+            if (chrome.runtime.lastError) {
+              console.warn(
+                "Background clearAllData failed:",
+                chrome.runtime.lastError.message
+              );
+              resolve(null);
+            } else {
+              resolve(res);
+            }
+          });
+        } catch (err) {
+          console.warn("sendMessage threw", err);
+          resolve(null);
+        }
       });
 
-      if (tab && this.isTwitterPage(tab.url)) {
-        await chrome.tabs.sendMessage(tab.id, { action: "clearData" });
+      if (bgResponse && bgResponse.success) {
+        // Reset UI
+        this.updateStatisticsDisplay({
+          total: 0,
+          bySource: {},
+          currentSession: { isActive: false },
+        });
+
+        this.showToast("All data cleared successfully", "success");
+      } else {
+        console.error("Background script failed to clear data:", bgResponse);
+        this.showToast("Failed to clear data from background script", "error");
       }
-
-      // Reset UI
-      this.updateStatisticsDisplay({
-        total: 0,
-        bySource: {},
-        currentSession: { isActive: false },
-      });
-
-      this.showToast("All data cleared successfully", "success");
     } catch (error) {
       console.error("Error clearing data:", error);
       this.showToast("Error clearing data: " + error.message, "error");

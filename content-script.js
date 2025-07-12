@@ -302,6 +302,16 @@ class TwitterCollectorContentScript {
       // Add session ID to tweets
       filteredTweets.forEach((tweet) => {
         tweet.capture_session_id = this.currentSession;
+        // Attach filter regex as tag for categorization
+        if (this.filterRegex) {
+          if (Array.isArray(tweet.tags)) {
+            if (!tweet.tags.includes(this.filterRegex)) {
+              tweet.tags.push(this.filterRegex);
+            }
+          } else {
+            tweet.tags = [this.filterRegex];
+          }
+        }
         this.capturedTweetIds.add(tweet.id);
       });
 
@@ -531,6 +541,10 @@ class TwitterCollectorContentScript {
       }
 
       this.isCapturing = false;
+
+      // Reset any active filter so the next capture starts fresh
+      this.activeFilterRE = null;
+      this.filterRegex = null;
 
       // Stop stats updates
       if (this.statsUpdateInterval) {
