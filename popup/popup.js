@@ -656,6 +656,9 @@ class TwitterCollectorPopup {
       // Show/hide speed selector
       this.toggleSpeedSelectorVisibility(isEnabled);
 
+      // Toggle filter input based on auto-scroll state
+      this.toggleFilterInputState(isEnabled);
+
       // Send preference to content script with current speed setting
       const message = {
         action: "setAutoScrollPreference",
@@ -754,14 +757,21 @@ class TwitterCollectorPopup {
   async loadAutoScrollPreference() {
     try {
       const result = await chrome.storage.local.get(["autoScrollEnabled"]);
-      if (result.autoScrollEnabled) {
+      const autoScrollEnabled = result.autoScrollEnabled || false;
+      
+      if (autoScrollEnabled) {
         const toggle = document.getElementById("auto-scroll-toggle");
         toggle.checked = true;
         this.updateAutoScrollStatus(true, false, true);
         this.toggleSpeedSelectorVisibility(true);
       }
+      
+      // Set initial filter input state based on auto-scroll preference
+      this.toggleFilterInputState(autoScrollEnabled);
     } catch (error) {
       console.log("No auto-scroll preference found:", error);
+      // Ensure filter is enabled by default if no preference found
+      this.toggleFilterInputState(false);
     }
   }
 
@@ -915,6 +925,26 @@ class TwitterCollectorPopup {
       speedSelector.classList.add("visible");
     } else {
       speedSelector.classList.remove("visible");
+    }
+  }
+
+  toggleFilterInputState(autoScrollEnabled) {
+    const filterInput = document.getElementById("filter-input");
+    const settingGroup = filterInput.parentElement;
+    const settingHelp = settingGroup.querySelector(".setting-help");
+    
+    if (autoScrollEnabled) {
+      // Disable filter when auto-scroll is enabled
+      filterInput.disabled = true;
+      filterInput.title = "Advanced search is disabled when auto-scroll is enabled";
+      settingGroup.classList.add("disabled");
+      settingHelp.textContent = "Advanced search is disabled during auto-scroll (captures all tweets)";
+    } else {
+      // Enable filter when auto-scroll is disabled
+      filterInput.disabled = false;
+      filterInput.title = "Filter tweets by regex pattern or keywords (case-insensitive)";
+      settingGroup.classList.remove("disabled");
+      settingHelp.textContent = "Filter captured tweets using regular expressions or keywords";
     }
   }
 }

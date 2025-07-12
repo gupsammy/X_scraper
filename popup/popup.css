@@ -1223,6 +1223,16 @@ body {
   background: var(--neutral-100);
   color: var(--neutral-500);
   cursor: not-allowed;
+  border-color: var(--neutral-200);
+}
+
+.setting-group.disabled .setting-help {
+  color: var(--neutral-400);
+  font-style: italic;
+}
+
+.setting-group.disabled .setting-label {
+  color: var(--neutral-400);
 }
 
 .setting-help {
