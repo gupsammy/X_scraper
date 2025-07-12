@@ -5,11 +5,13 @@ A Chrome extension that captures and stores Twitter bookmarks and user tweets lo
 ## Features
 
 - 🔖 **Capture Twitter Bookmarks** - Automatically save your bookmarked tweets
-- 👤 **Capture User Tweets** - Save tweets from any user's profile
+- 👤 **Capture User Tweets** - Save tweets from any user's profile  
+- 🎯 **Advanced Filtering** - Filter tweets during capture using regex patterns or keywords
 - 🔍 **Smart Page Detection** - Automatically detects bookmark pages vs user profiles
 - 💾 **Local Storage** - All data stored securely in your browser's IndexedDB
 - 📊 **Data Viewer** - Beautiful interface to view, search, and filter captured tweets
 - 🚀 **Real-time Capture** - Live progress tracking as you scroll and load tweets
+- ⚡ **Auto-scroll** - Intelligent auto-scrolling with configurable speed control
 - 📋 **Export Data** - Export your captured tweets to JSON format
 
 ## Installation
@@ -32,14 +34,47 @@ A Chrome extension that captures and stores Twitter bookmarks and user tweets lo
    - Search results: `twitter.com/search?q=something`
 
 3. **Click the extension icon** in your toolbar
-4. **Click "Start Capture"** in the popup
-5. **Scroll down** to load more tweets - they'll be captured automatically
-6. **Click "Stop Capture"** when finished
+4. **(Optional) Configure Advanced Settings**:
+   - Click "Advanced Settings" to expand options
+   - Enter a regex pattern or keywords to filter tweets during capture
+   - Enable/disable auto-scroll and adjust speed
+5. **Click "Start Listening"** in the popup  
+6. **Scroll down** to load more tweets - they'll be captured automatically (or enable auto-scroll)
+7. **Click "Stop Capture"** when finished
+
+### Advanced Filtering
+
+The extension supports selective tweet filtering using regular expressions or keywords. **Note: Filtering only works when auto-scroll is disabled** to avoid performance issues during high-volume capture.
+
+#### Filter Examples
+
+**Keywords:**
+- `AI` - Capture tweets containing "AI" (case-insensitive)
+- `javascript|typescript` - Tweets mentioning either JavaScript or TypeScript
+- `#BlackFriday` - Tweets with specific hashtags
+
+**Regular Expressions:**
+- `\b(bug|issue|fix)\b` - Tweets about bugs, issues, or fixes
+- `https://github\.com` - Tweets with GitHub links
+- `@(elonmusk|sundarpichai)` - Tweets mentioning specific users
+- `\$[A-Z]{1,5}\b` - Tweets mentioning stock symbols
+
+**Date/Time Patterns:**
+- `\b202[3-4]\b` - Tweets mentioning years 2023 or 2024
+- `[Jj]anuary|[Ff]ebruary` - Tweets mentioning specific months
+
+#### How to Use Filters
+
+1. **Open Advanced Settings** in the popup
+2. **Enter your pattern** in the "Advanced Search" field
+3. **Ensure auto-scroll is OFF** (filtering is disabled during auto-scroll)
+4. **Start capture** - only matching tweets will be saved
+5. **Empty field** captures all tweets (default behavior)
 
 ### Viewing Your Data
 
 1. **Click the extension icon**
-2. **Click "View Captured Data"**
+2. **Click "View Data"**
 3. **Use the filters** to search and sort your tweets:
    - Filter by source (bookmarks, profiles, search)
    - Search tweet content, authors, or usernames
