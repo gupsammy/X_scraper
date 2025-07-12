@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tweet Filtering Tests</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .test-case {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 16px 0;
+        background: #f9f9f9;
+      }
+      .test-case.pass {
+        border-color: #10b981;
+        background: #ecfdf5;
+      }
+      .test-case.fail {
+        border-color: #ef4444;
+        background: #fef2f2;
+      }
+      .test-name {
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      .test-result {
+        font-weight: 600;
+        margin-top: 8px;
+      }
+      .pass {
+        color: #10b981;
+      }
+      .fail {
+        color: #ef4444;
+      }
+      pre {
+        background: #f3f4f6;
+        padding: 12px;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 14px;
+      }
+      button {
+        background: #6366f1;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover {
+        background: #4f46e5;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Tweet Filtering Test Suite</h1>
+    <p>
+      This test suite validates the tweet filtering logic used in the Chrome
+      extension.
+    </p>
+
+    <button onclick="runAllTests()">Run All Tests</button>
+
+    <div id="test-results"></div>
+
+    <script>
+      // Mock tweet data for testing
+      const mockTweets = [
+        {
+          id: "1",
+          full_text: "Just tried ChatGPT for the first time. Mind blown! 🤯",
+          author_screen_name: "tech_user",
+        },
+        {
+          id: "2",
+          text: "Working on some exciting AI projects with Claude and GPT-4",
+          author_screen_name: "developer",
+        },
+        {
+          id: "3",
+          full_text: "Beautiful sunset today. Nature is amazing! 🌅",
+          author_screen_name: "photographer",
+        },
+        {
+          id: "4",
+          text: "Investing in $AAPL and $TSLA for the long term",
+          author_screen_name: "investor",
+        },
+        {
+          id: "5",
+          full_text:
+            "Open source software is the future! Check out this new project #opensource",
+          author_screen_name: "coder",
+        },
+        {
+          id: "6",
+          text: "Machine Learning and Deep Learning are transforming everything",
+          author_screen_name: "ai_researcher",
+        },
+        {
+          id: "7",
+          full_text: "Just had amazing coffee at @starbucks ☕",
+          author_screen_name: "coffee_lover",
+        },
+      ];
+
+      // Simulate the filtering logic from content-script.js
+      function testTweetAgainstFilter(tweet, regex) {
+        if (!regex) {
+          return true; // No filter active
+        }
+
+        try {
+          // Test against multiple text fields
+          const textFields = [
+            tweet.full_text,
+            tweet.text,
+            tweet.legacy?.full_text,
+            tweet.legacy?.text,
+          ].filter(Boolean);
+
+          // Test against any of the text fields
+          for (const text of textFields) {
+            if (text && regex.test(text)) {
+              return true;
+            }
+          }
+
+          return false;
+        } catch (error) {
+          console.error("Error testing tweet against filter:", error);
+          return true; // Include tweet if filter test fails
+        }
+      }
+
+      // Test cases
+      const testCases = [
+        {
+          name: "Simple keyword filter - 'chatgpt'",
+          regex: /chatgpt/i,
+          expectedMatches: ["1", "2"],
+        },
+        {
+          name: "Multiple terms with OR - 'ai|ml|gpt'",
+          regex: /ai|ml|gpt/i,
+          expectedMatches: ["1", "2", "6"],
+        },
+        {
+          name: "Exact phrase - 'open source'",
+          regex: /open source/i,
+          expectedMatches: ["5"],
+        },
+        {
+          name: "Stock ticker pattern - '$[A-Z]{1,5}'",
+          regex: /\$[A-Z]{1,5}\b/,
+          expectedMatches: ["4"],
+        },
+        {
+          name: "Hashtag pattern - '#\\w+'",
+          regex: /#\w+/,
+          expectedMatches: ["5"],
+        },
+        {
+          name: "Mention pattern - '@\\w+'",
+          regex: /@\w+/,
+          expectedMatches: ["7"],
+        },
+        {
+          name: "Word boundary test - '\\bAI\\b'",
+          regex: /\bAI\b/i,
+          expectedMatches: ["2", "6"],
+        },
+        {
+          name: "Case insensitive - 'NATURE'",
+          regex: /NATURE/i,
+          expectedMatches: ["3"],
+        },
+        {
+          name: "No matches - 'cryptocurrency'",
+          regex: /cryptocurrency/i,
+          expectedMatches: [],
+        },
+        {
+          name: "Empty filter (null)",
+          regex: null,
+          expectedMatches: ["1", "2", "3", "4", "5", "6", "7"],
+        },
+      ];
+
+      function runTest(testCase) {
+        const { name, regex, expectedMatches } = testCase;
+
+        // Filter tweets using the test function
+        const matchedTweets = mockTweets.filter((tweet) =>
+          testTweetAgainstFilter(tweet, regex)
+        );
+
+        const actualMatches = matchedTweets.map((tweet) => tweet.id).sort();
+        const expected = expectedMatches.sort();
+
+        const passed =
+          JSON.stringify(actualMatches) === JSON.stringify(expected);
+
+        return {
+          name,
+          passed,
+          expected,
+          actual: actualMatches,
+          regex: regex ? regex.toString() : "null",
+          matchedTweets,
+        };
+      }
+
+      function renderTestResult(result) {
+        const { name, passed, expected, actual, regex, matchedTweets } = result;
+
+        return `
+                <div class="test-case ${passed ? "pass" : "fail"}">
+                    <div class="test-name">${name}</div>
+                    <div><strong>Regex:</strong> <code>${regex}</code></div>
+                    <div><strong>Expected matches:</strong> [${expected.join(
+                      ", "
+                    )}]</div>
+                    <div><strong>Actual matches:</strong> [${actual.join(
+                      ", "
+                    )}]</div>
+                    <div class="test-result ${passed ? "pass" : "fail"}">
+                        ${passed ? "✓ PASS" : "✗ FAIL"}
+                    </div>
+                    ${
+                      matchedTweets.length > 0
+                        ? `
+                        <details>
+                            <summary>Matched Tweets (${
+                              matchedTweets.length
+                            })</summary>
+                            <pre>${matchedTweets
+                              .map(
+                                (t) =>
+                                  `ID: ${t.id}\nText: ${
+                                    t.full_text || t.text
+                                  }\nAuthor: @${t.author_screen_name}`
+                              )
+                              .join("\n\n")}</pre>
+                        </details>
+                    `
+                        : ""
+                    }
+                </div>
+            `;
+      }
+
+      function runAllTests() {
+        const results = testCases.map(runTest);
+        const passCount = results.filter((r) => r.passed).length;
+        const totalCount = results.length;
+
+        const resultsHtml = `
+                <h2>Test Results: ${passCount}/${totalCount} passed</h2>
+                ${results.map(renderTestResult).join("")}
+                
+                <h3>Mock Tweet Data</h3>
+                <pre>${JSON.stringify(mockTweets, null, 2)}</pre>
+            `;
+
+        document.getElementById("test-results").innerHTML = resultsHtml;
+
+        console.log(`Tests completed: ${passCount}/${totalCount} passed`);
+        results.forEach((result) => {
+          console.log(`${result.passed ? "✓" : "✗"} ${result.name}`);
+        });
+      }
+
+      // Run tests on page load
+      document.addEventListener("DOMContentLoaded", runAllTests);
+    </script>
+  </body>
+</html>
