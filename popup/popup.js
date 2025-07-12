@@ -395,10 +395,12 @@ class TwitterCollectorPopup {
         const validation = this.validateFilterRegex(this.filterRegex);
         if (!validation.isValid) {
           this.showToast("Invalid filter regex: " + validation.error, "error");
-          // Highlight the invalid input
+          // Highlight the invalid input and open advanced settings
           const filterInput = document.getElementById("filter-input");
+          const advancedSettings = document.getElementById("advanced-settings");
           filterInput.classList.add("invalid");
           filterInput.focus();
+          advancedSettings.open = true;
           return;
         }
         filterRegex = this.filterRegex;
@@ -706,12 +708,17 @@ class TwitterCollectorPopup {
       this.updateAutoScrollStatus(isEnabled, false, true);
 
       if (isEnabled) {
-        this.showToast(
-          "Auto-scroll enabled - will start after capture begins",
-          "info"
-        );
+        let message = "Auto-scroll enabled - will start after capture begins";
+        if (this.filterRegex) {
+          message += ". Filtering has been disabled for performance.";
+        }
+        this.showToast(message, "info");
       } else {
-        this.showToast("Auto-scroll disabled", "info");
+        let message = "Auto-scroll disabled";
+        if (this.filterRegex) {
+          message += ". Filtering is now available.";
+        }
+        this.showToast(message, "info");
       }
     } catch (error) {
       console.error("Error toggling auto-scroll:", error);
@@ -790,9 +797,16 @@ class TwitterCollectorPopup {
         toggle.checked = true;
         this.updateAutoScrollStatus(true, false, true);
         this.toggleSpeedSelectorVisibility(true);
+        // Filter should be disabled when auto-scroll is enabled
+        this.toggleFilterEnabled(false);
+      } else {
+        // Filter should be enabled when auto-scroll is disabled
+        this.toggleFilterEnabled(true);
       }
     } catch (error) {
       console.log("No auto-scroll preference found:", error);
+      // Default to filter enabled when no preference
+      this.toggleFilterEnabled(true);
     }
   }
 
@@ -977,13 +991,17 @@ class TwitterCollectorPopup {
       filterInput.disabled = false;
       filterInput.placeholder =
         "Regex or keywords (e.g., chatgpt, *open-source*)";
+      filterInput.classList.remove("disabled-by-autoscroll");
       settingHelp.textContent = "Only capture tweets matching this pattern";
+      settingHelp.classList.remove("warning");
     } else {
       filterInput.disabled = true;
       filterInput.placeholder =
         "Filtering disabled when auto-scroll is enabled";
+      filterInput.classList.add("disabled-by-autoscroll");
       settingHelp.textContent =
-        "Auto-scroll captures all tweets for performance";
+        "Auto-scroll captures all tweets for performance. Disable auto-scroll to use filtering.";
+      settingHelp.classList.add("warning");
     }
   }
 
