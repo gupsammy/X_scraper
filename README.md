@@ -32,14 +32,14 @@ A Chrome extension that captures and stores Twitter bookmarks and user tweets lo
    - Search results: `twitter.com/search?q=something`
 
 3. **Click the extension icon** in your toolbar
-4. **Click "Start Capture"** in the popup
+4. **Click "Start Listening"** in the popup
 5. **Scroll down** to load more tweets - they'll be captured automatically
 6. **Click "Stop Capture"** when finished
 
 ### Viewing Your Data
 
 1. **Click the extension icon**
-2. **Click "View Captured Data"**
+2. **Click "View Data"**
 3. **Use the filters** to search and sort your tweets:
    - Filter by source (bookmarks, profiles, search)
    - Search tweet content, authors, or usernames
@@ -91,7 +91,7 @@ A Chrome extension that captures and stores Twitter bookmarks and user tweets lo
 
 ### No tweets being captured
 
-- Ensure you've clicked "Start Capture"
+- Ensure you've clicked "Start Listening"
 - Check that you're scrolling to load new tweets
 - Verify the page is supported (bookmarks, profiles, search)
 

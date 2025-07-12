@@ -478,7 +478,7 @@ class TwitterCollectorPopup {
     } else {
       captureBtn.classList.remove("capturing");
       btnIcon.textContent = "▶️";
-      btnText.textContent = "Start Capture";
+      btnText.textContent = "Start Listening";
       statusDot.classList.remove("capturing");
       statusText.textContent = "Ready";
     }
