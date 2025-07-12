@@ -242,23 +242,27 @@ class TwitterCollectorPopup {
   updatePageContext(context) {
     this.currentContext = context;
 
-    const contextIcon = document.getElementById("context-icon");
-    const contextName = document.getElementById("context-name");
-    const contextDescription = document.getElementById("context-description");
+    const contextBadge = document.getElementById("context-badge");
     const captureBtn = document.getElementById("capture-btn");
 
-    // Update context display
-    contextName.textContent = context.displayName;
-    contextDescription.textContent = context.description;
-
-    // Update context icon
-    const icons = {
-      bookmarks: "🔖",
-      usertweets: "👤",
-      search: "🔍",
-      unknown: "❓",
+    // Update context badge with simplified display names
+    const badgeText = {
+      bookmarks: "Bookmarks",
+      usertweets: "Profile", 
+      search: "Search",
+      unknown: "Navigate to Twitter",
     };
-    contextIcon.textContent = icons[context.type] || "❓";
+    
+    const badgeColors = {
+      bookmarks: "primary",
+      usertweets: "success", 
+      search: "warning",
+      unknown: "neutral",
+    };
+
+    contextBadge.textContent = badgeText[context.type] || "Unknown";
+    contextBadge.className = `context-badge badge badge-${badgeColors[context.type] || 'neutral'}`;
+    contextBadge.title = context.description;
 
     // Enable/disable capture button based on context
     const canCapture = context.type !== "unknown";
