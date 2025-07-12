@@ -353,8 +353,12 @@ class TwitterCollectorPopup {
         return;
       }
 
+      // TODO: Advanced Filtering - Add filterRegex validation and pass to startCapture
+      // TODO: Advanced Filtering - Get regex value from advanced settings input
+      // TODO: Advanced Filtering - Validate regex before sending, show toast on error
       const response = await chrome.tabs.sendMessage(tab.id, {
         action: "startCapture",
+        // TODO: Advanced Filtering - Add filterRegex parameter here
       });
 
       if (response && response.success) {

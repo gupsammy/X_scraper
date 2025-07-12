@@ -219,6 +219,12 @@ class TwitterCollectorContentScript {
         (tweet) => !this.capturedTweetIds.has(tweet.id)
       );
 
+      // TODO: Advanced Filtering - Apply regex filter after deduplication but before storage
+      // TODO: Advanced Filtering - Only filter when auto-scroll is disabled
+      // const filteredTweets = this.activeFilterRE && !this.autoScrollPreference
+      //   ? newTweets.filter(t => this.activeFilterRE.test(t.full_text || t.text))
+      //   : newTweets;
+
       // --------------------------
       //  Rate-limit measurement
       // --------------------------
@@ -321,6 +327,8 @@ class TwitterCollectorContentScript {
 
       switch (message.action) {
         case "startCapture":
+          // TODO: Advanced Filtering - Accept filterRegex parameter from message
+          // TODO: Advanced Filtering - Compile regex once and store in this.activeFilterRE
           this.startCapture();
           sendResponse({ success: true });
           break;
