@@ -1136,3 +1136,114 @@ body {
   border-radius: var(--radius-sm);
   font-weight: 500;
 }
+
+/* Advanced Settings Panel */
+.advanced-settings {
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  background: var(--neutral-50);
+}
+
+.advanced-settings-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--neutral-700);
+  list-style: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.advanced-settings-summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-settings-summary:hover {
+  background: var(--neutral-100);
+}
+
+.advanced-settings[open] .advanced-settings-summary {
+  border-bottom: 1px solid var(--neutral-200);
+  background: var(--neutral-100);
+}
+
+.summary-icon {
+  color: var(--neutral-500);
+  transition: transform 0.2s ease;
+}
+
+.advanced-settings[open] .summary-icon {
+  transform: rotate(90deg);
+}
+
+.advanced-settings-content {
+  padding: var(--space-4);
+  background: white;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+/* Setting Groups */
+.setting-group {
+  margin-bottom: var(--space-4);
+}
+
+.setting-group:last-child {
+  margin-bottom: 0;
+}
+
+.setting-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--neutral-700);
+  margin-bottom: var(--space-2);
+}
+
+.setting-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: var(--font-mono);
+}
+
+.setting-input:focus {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px var(--primary-100);
+}
+
+.setting-input:disabled {
+  background: var(--neutral-100);
+  color: var(--neutral-500);
+  cursor: not-allowed;
+}
+
+.setting-help {
+  margin-top: var(--space-1);
+  font-size: 0.75rem;
+  color: var(--neutral-500);
+  margin-bottom: 0;
+}
+
+/* Auto-scroll Row Layout */
+.auto-scroll-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.auto-scroll-row .toggle-label {
+  flex-shrink: 0;
+}
+
+.auto-scroll-row .speed-selector {
+  flex: 1;
+  min-width: 0;
+}

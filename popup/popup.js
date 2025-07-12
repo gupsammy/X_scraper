@@ -37,6 +37,9 @@ class TwitterCollectorPopup {
       await this.loadAutoScrollPreference();
       await this.loadSpeedPreference();
 
+      // TODO: Advanced Filtering - Load advanced settings state and filter value
+      await this.loadAdvancedSettings();
+
       // Set up message listeners for real-time updates
       this.setupMessageListeners();
 
@@ -91,6 +94,12 @@ class TwitterCollectorPopup {
     const speedSlider = document.getElementById("speed-slider");
     speedSlider.addEventListener("input", (e) => {
       this.updateSpeedSelection(parseInt(e.target.value));
+    });
+
+    // Advanced settings toggle
+    const advSettings = document.getElementById("adv-settings");
+    advSettings.addEventListener("toggle", (e) => {
+      this.saveAdvancedSettingsState(e.target.open);
     });
   }
 
@@ -810,6 +819,38 @@ class TwitterCollectorPopup {
       speedDisplay.textContent = this.speedLevels[this.currentSpeedIndex].display;
     } catch (error) {
       console.log("No speed preference found:", error);
+    }
+  }
+
+  // TODO: Advanced Filtering - Implement advanced settings persistence
+  async loadAdvancedSettings() {
+    try {
+      const result = await chrome.storage.local.get([
+        "advancedSettingsOpen", 
+        "advancedFilterValue"
+      ]);
+
+      // Restore advanced settings panel state
+      const advSettings = document.getElementById("adv-settings");
+      if (result.advancedSettingsOpen) {
+        advSettings.open = true;
+      }
+
+      // Restore filter input value
+      const filterInput = document.getElementById("filter-input");
+      if (result.advancedFilterValue) {
+        filterInput.value = result.advancedFilterValue;
+      }
+    } catch (error) {
+      console.log("No advanced settings found:", error);
+    }
+  }
+
+  async saveAdvancedSettingsState(isOpen) {
+    try {
+      await chrome.storage.local.set({ advancedSettingsOpen: isOpen });
+    } catch (error) {
+      console.log("Error saving advanced settings state:", error);
     }
   }
 
