@@ -93,8 +93,8 @@ html {
   width: 380px;
   min-width: 380px;
   height: auto;
-  min-height: 600px;
-  max-height: 800px;
+  min-height: 500px;
+  max-height: 650px;
   margin: 0;
   padding: 0;
 }
@@ -112,8 +112,8 @@ body {
   width: 380px;
   min-width: 380px;
   height: auto;
-  min-height: 600px;
-  max-height: 800px;
+  min-height: 500px;
+  max-height: 650px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
@@ -125,8 +125,8 @@ body {
   min-width: 380px;
   max-width: 380px;
   height: auto;
-  min-height: 600px;
-  max-height: 750px;
+  min-height: 500px;
+  max-height: 650px;
   background: white;
   border-radius: 0;
   box-shadow: none;
@@ -250,7 +250,7 @@ body {
 
 /* Main Content */
 .main-content {
-  padding: var(--space-6);
+  padding: var(--space-4) var(--space-6);
   flex: 1;
 }
 
@@ -1147,8 +1147,8 @@ body {
     var(--primary-50) 100%
   );
   border-radius: var(--radius-lg);
-  padding: var(--space-4) var(--space-5);
-  margin-bottom: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
   border: 1px solid var(--neutral-200);
   box-shadow: var(--shadow-sm);
 }
@@ -1168,7 +1168,7 @@ body {
 }
 
 .stats-row .stat-number {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-600);
   margin-bottom: var(--space-1);
@@ -1210,7 +1210,7 @@ body {
 .primary-actions {
   display: flex;
   gap: var(--space-3);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .primary-actions .action-btn,
@@ -1285,7 +1285,7 @@ body {
   background: var(--neutral-50);
   border-radius: var(--radius-lg);
   border: 1px solid var(--neutral-200);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
   overflow: hidden;
 }
 
@@ -1471,7 +1471,7 @@ body {
 
 /* Secondary Actions */
 .secondary-actions {
-  margin-top: var(--space-6);
+  margin-top: var(--space-4);
 }
 
 /* Responsive adjustments */
@@ -1498,12 +1498,12 @@ body {
   }
 
   .stats-row {
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-2) var(--space-3);
   }
 
   .stats-row .stat-item:not(:last-child) {
-    margin-right: var(--space-3);
-    padding-right: var(--space-3);
+    margin-right: var(--space-2);
+    padding-right: var(--space-2);
   }
 
   .primary-actions {
