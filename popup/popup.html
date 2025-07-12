@@ -20,66 +20,34 @@
         <div class="status-indicator" id="status-indicator">
           <span class="status-dot" id="status-dot"></span>
           <span class="status-text" id="status-text">Ready</span>
-          <!-- TODO: Add page detection badge here instead of separate section -->
+          <!-- Page detection badge -->
+          <span class="page-badge" id="page-badge">
+            <span class="badge-icon" id="badge-icon">🔍</span>
+            <span class="badge-text" id="badge-text">Twitter</span>
+          </span>
         </div>
       </header>
 
       <!-- Main Content -->
       <main class="main-content">
-        <!-- TODO: Replace with minimal stats row at top -->
-        <!-- Statistics -->
-        <div class="stats-section">
-          <h3>Statistics</h3>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <div class="stat-number" id="total-tweets">0</div>
-              <div class="stat-label">Total Tweets</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number" id="bookmarks-count">0</div>
-              <div class="stat-label">Bookmarks</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number" id="profiles-count">0</div>
-              <div class="stat-label">Profiles</div>
-            </div>
+        <!-- Statistics Row -->
+        <section class="stats-row">
+          <div class="stat-item">
+            <div class="stat-number" id="total-tweets">0</div>
+            <div class="stat-label">Total</div>
           </div>
-        </div>
+          <div class="stat-item">
+            <div class="stat-number" id="bookmarks-count">0</div>
+            <div class="stat-label">Bookmarks</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="profiles-count">0</div>
+            <div class="stat-label">Profiles</div>
+          </div>
+        </section>
 
-        <!-- TODO: Convert to inline badge in header -->
-        <!-- Page Context Detection -->
-        <div class="context-section">
-          <div class="context-header">
-            <h3>Page Detection</h3>
-            <div class="context-icon" id="context-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                width="16"
-                height="16"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-            </div>
-          </div>
-          <div class="context-info">
-            <div class="context-display" id="context-display">
-              <span class="context-name" id="context-name"
-                >Navigate to Twitter</span
-              >
-              <span class="context-description" id="context-description"
-                >Go to bookmarks or profile page</span
-              >
-            </div>
-          </div>
-        </div>
-
-        <!-- TODO: Restructure as primary actions row -->
-        <!-- Action Buttons -->
-        <div class="actions-section">
+        <!-- Primary Actions Row -->
+        <section class="primary-actions">
           <button class="action-btn primary" id="view-data-btn">
             <span class="btn-icon">
               <svg
@@ -95,67 +63,111 @@
                 <line x1="6" y1="20" x2="6" y2="14" />
               </svg>
             </span>
-            View Captured Data
+            View Data
           </button>
 
-          <!-- TODO: Move to primary actions row -->
-          <!-- Capture Controls -->
-          <div class="capture-section">
-            <button class="capture-btn" id="capture-btn" disabled>
-              <span class="btn-icon" id="btn-icon">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  width="16"
-                  height="16"
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </span>
-              <span class="btn-text" id="btn-text">Start Capture</span>
-            </button>
+          <button class="capture-btn" id="capture-btn" disabled>
+            <span class="btn-icon" id="btn-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                width="16"
+                height="16"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+            <span class="btn-text" id="btn-text">Start Listening</span>
+          </button>
+        </section>
 
-            <!-- TODO: Move to collapsible Advanced Settings -->
-            <div class="capture-options">
-              <label class="toggle-label">
-                <span class="toggle-text">Auto-scroll</span>
-                <div class="toggle-switch">
-                  <input type="checkbox" id="auto-scroll-toggle" />
-                  <span class="toggle-slider"></span>
-                </div>
-                <span class="toggle-status" id="auto-scroll-status">OFF</span>
-              </label>
+        <!-- Advanced Settings (Collapsible) -->
+        <details class="advanced-settings" id="advanced-settings">
+          <summary class="settings-summary">
+            <span class="settings-icon">⚙️</span>
+            <span class="settings-text">Advanced Settings</span>
+            <span class="settings-chevron">▼</span>
+          </summary>
 
-              <div class="speed-selector" id="speed-selector">
-                <label class="speed-label">
-                  <span class="speed-text">Speed</span>
-                  <div class="speed-control">
-                    <span class="speed-indicator slow">1/4x</span>
-                    <input
-                      type="range"
-                      id="speed-slider"
-                      min="0"
-                      max="5"
-                      value="2"
-                      step="1"
-                      class="speed-slider"
-                    />
-                    <span class="speed-indicator fast">8x</span>
+          <div class="settings-content">
+            <!-- Advanced Search Input -->
+            <div class="setting-group">
+              <label class="setting-label" for="filter-input"
+                >Advanced Search</label
+              >
+              <input
+                type="text"
+                id="filter-input"
+                class="filter-input"
+                placeholder="Regex or keywords (e.g., chatgpt, *open-source*)"
+                title="Enter keywords or regex pattern to filter tweets"
+              />
+              <div class="setting-help">
+                Only capture tweets matching this pattern
+              </div>
+            </div>
+
+            <!-- Auto-scroll Row -->
+            <div class="setting-group">
+              <div class="auto-scroll-row">
+                <label class="toggle-label">
+                  <span class="toggle-text">Auto-scroll</span>
+                  <div class="toggle-switch">
+                    <input type="checkbox" id="auto-scroll-toggle" />
+                    <span class="toggle-slider"></span>
                   </div>
-                  <span class="speed-display" id="speed-display"
-                    >1x (Default)</span
-                  >
+                  <span class="toggle-status" id="auto-scroll-status">OFF</span>
                 </label>
+
+                <div class="speed-selector" id="speed-selector">
+                  <label class="speed-label">
+                    <span class="speed-text">Speed</span>
+                    <div class="speed-control">
+                      <span class="speed-indicator slow">1/4x</span>
+                      <input
+                        type="range"
+                        id="speed-slider"
+                        min="0"
+                        max="5"
+                        value="2"
+                        step="1"
+                        class="speed-slider"
+                      />
+                      <span class="speed-indicator fast">8x</span>
+                    </div>
+                    <span class="speed-display" id="speed-display"
+                      >1x (Default)</span
+                    >
+                  </label>
+                </div>
               </div>
             </div>
           </div>
+        </details>
 
-          <!-- TODO: Add collapsible Advanced Settings section here -->
-          <!-- Advanced Settings will contain:
-               - Advanced Search input (regex/keywords)
-               - Auto-scroll toggle + speed slider in single row
-          -->
+        <!-- Progress Section -->
+        <div
+          class="progress-section"
+          id="progress-section"
+          style="display: none"
+        >
+          <h3>Capture Progress</h3>
+          <div class="progress-info">
+            <div class="progress-stats">
+              <span id="current-session-count">0</span> tweets captured
+              <span class="session-type" id="session-type"></span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+          </div>
+          <div class="live-updates" id="live-updates">
+            <div class="update-item">Waiting for API calls...</div>
+          </div>
+        </div>
 
+        <!-- Secondary Actions -->
+        <section class="secondary-actions">
           <div class="action-row">
             <button class="action-btn secondary" id="export-btn">
               <span class="btn-icon">
@@ -214,28 +226,7 @@
             </span>
             Clear All Data
           </button>
-        </div>
-
-        <!-- Progress Section -->
-        <div
-          class="progress-section"
-          id="progress-section"
-          style="display: none"
-        >
-          <h3>Capture Progress</h3>
-          <div class="progress-info">
-            <div class="progress-stats">
-              <span id="current-session-count">0</span> tweets captured
-              <span class="session-type" id="session-type"></span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="progress-fill"></div>
-            </div>
-          </div>
-          <div class="live-updates" id="live-updates">
-            <div class="update-item">Waiting for API calls...</div>
-          </div>
-        </div>
+        </section>
       </main>
 
       <!-- Footer -->
