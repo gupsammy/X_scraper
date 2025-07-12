@@ -15,6 +15,10 @@ class TwitterCollectorContentScript {
     // History of recent API calls for rate-limit tracking (keeps ~1 min)
     this.apiHistory = []; // [{ ts: epochMillis, tweets: number }]
 
+    // TODO: Add filter regex state
+    this.activeFilterRE = null; // Compiled RegExp for filtering tweets
+    this.filterRegex = null; // Original regex string
+
     // Listen for posted messages from injected script
     window.addEventListener("message", (event) => {
       if (event.source !== window) return;
@@ -219,6 +223,11 @@ class TwitterCollectorContentScript {
         (tweet) => !this.capturedTweetIds.has(tweet.id)
       );
 
+      // TODO: Apply regex filtering here (after deduplication, before persistence)
+      // const filteredTweets = this.activeFilterRE && !this.autoScrollPreference
+      //   ? newTweets.filter(tweet => this.activeFilterRE.test(tweet.full_text || tweet.text))
+      //   : newTweets;
+
       // --------------------------
       //  Rate-limit measurement
       // --------------------------
@@ -321,6 +330,8 @@ class TwitterCollectorContentScript {
 
       switch (message.action) {
         case "startCapture":
+          // TODO: Accept filterRegex parameter
+          // this.startCapture(message.filterRegex);
           this.startCapture();
           sendResponse({ success: true });
           break;
@@ -373,7 +384,11 @@ class TwitterCollectorContentScript {
           return true;
 
         case "setAutoScrollPreference":
-          this.setAutoScrollPreference(message.enabled, message.pageContext, message.speedIndex);
+          this.setAutoScrollPreference(
+            message.enabled,
+            message.pageContext,
+            message.speedIndex
+          );
           sendResponse({ success: true });
           break;
 
@@ -396,7 +411,7 @@ class TwitterCollectorContentScript {
   }
 
   // Start capture process
-  async startCapture() {
+  async startCapture(filterRegex = null) {
     try {
       if (this.isCapturing) {
         debugLog("Capture already in progress");
@@ -408,6 +423,21 @@ class TwitterCollectorContentScript {
         debugLog("Cannot start capture on unsupported page");
         return;
       }
+
+      // TODO: Compile filter regex if provided
+      // if (filterRegex && !this.autoScrollPreference) {
+      //   try {
+      //     this.activeFilterRE = new RegExp(filterRegex, 'i');
+      //     this.filterRegex = filterRegex;
+      //     debugLog("Filter regex compiled:", filterRegex);
+      //   } catch (error) {
+      //     debugLog("Invalid filter regex:", error);
+      //     throw new Error("Invalid filter regex: " + error.message);
+      //   }
+      // } else {
+      //   this.activeFilterRE = null;
+      //   this.filterRegex = null;
+      // }
 
       debugLog("Starting capture for:", context);
 
@@ -662,7 +692,11 @@ class TwitterCollectorContentScript {
     try {
       this.autoScrollPreference = enabled;
       this.autoScrollSpeedIndex = speedIndex;
-      debugLog("Auto-scroll preference set:", { enabled, pageContext, speedIndex });
+      debugLog("Auto-scroll preference set:", {
+        enabled,
+        pageContext,
+        speedIndex,
+      });
 
       if (!enabled && this.autoScroller && this.autoScroller.isActive) {
         // If disabled and currently scrolling, stop it
@@ -677,7 +711,7 @@ class TwitterCollectorContentScript {
     try {
       this.autoScrollSpeedIndex = speedIndex;
       debugLog("Auto-scroll speed updated:", speedIndex);
-      
+
       // Update active auto-scroller if running
       if (this.autoScroller && this.autoScroller.isActive) {
         this.autoScroller.updateSpeed(speedIndex);
@@ -690,17 +724,20 @@ class TwitterCollectorContentScript {
   async checkAutoScrollPreference() {
     try {
       // Use chrome.storage.local because chrome.storage.session is not accessible from content scripts
-      const result = await chrome.storage.local.get(["autoScrollEnabled", "autoScrollSpeedIndex"]);
+      const result = await chrome.storage.local.get([
+        "autoScrollEnabled",
+        "autoScrollSpeedIndex",
+      ]);
       this.autoScrollPreference = result.autoScrollEnabled || false;
-      
+
       // Load speed index
       if (result.autoScrollSpeedIndex !== undefined) {
         this.autoScrollSpeedIndex = result.autoScrollSpeedIndex;
       }
-      
-      debugLog("Auto-scroll preference loaded:", { 
-        enabled: this.autoScrollPreference, 
-        speedIndex: this.autoScrollSpeedIndex 
+
+      debugLog("Auto-scroll preference loaded:", {
+        enabled: this.autoScrollPreference,
+        speedIndex: this.autoScrollSpeedIndex,
       });
     } catch (error) {
       debugLog("No auto-scroll preference found:", error);

@@ -5,7 +5,11 @@ class TwitterCollectorPopup {
     this.currentContext = null;
     this.currentStats = null;
     this.updateInterval = null;
-    
+
+    // TODO: Add filter regex state
+    this.filterRegex = null;
+    this.isFilterEnabled = false;
+
     // Speed control configuration (matches AutoScroller speedConfigs)
     this.speedLevels = [
       { display: "1/4x (Slowest)" },
@@ -13,7 +17,7 @@ class TwitterCollectorPopup {
       { display: "1x (Default)" },
       { display: "2x" },
       { display: "4x" },
-      { display: "8x (Max)" }
+      { display: "8x (Max)" },
     ];
     this.currentSpeedIndex = 2; // Default to 1x speed
 
@@ -36,6 +40,9 @@ class TwitterCollectorPopup {
       // Load auto-scroll preference and speed setting
       await this.loadAutoScrollPreference();
       await this.loadSpeedPreference();
+
+      // TODO: Load filter preference from storage
+      await this.loadFilterPreference();
 
       // Set up message listeners for real-time updates
       this.setupMessageListeners();
@@ -92,6 +99,9 @@ class TwitterCollectorPopup {
     speedSlider.addEventListener("input", (e) => {
       this.updateSpeedSelection(parseInt(e.target.value));
     });
+
+    // TODO: Add filter input event listener
+    // TODO: Add advanced settings collapse/expand listener
   }
 
   setupMessageListeners() {
@@ -353,8 +363,12 @@ class TwitterCollectorPopup {
         return;
       }
 
+      // TODO: Validate filter regex before starting capture
+      // TODO: Pass filterRegex in the message
+
       const response = await chrome.tabs.sendMessage(tab.id, {
         action: "startCapture",
+        // TODO: Add filterRegex: this.filterRegex
       });
 
       if (response && response.success) {
@@ -453,7 +467,7 @@ class TwitterCollectorPopup {
 
     const sessionType = document.getElementById("session-type");
     sessionType.textContent = data.context?.type || "";
-    
+
     // Add capture active styling to speed selector
     const speedSelector = document.getElementById("speed-selector");
     speedSelector.classList.add("capture-active");
@@ -705,7 +719,7 @@ class TwitterCollectorPopup {
 
   onAutoScrollProgress(data) {
     this.updateAutoScrollStatus(true, data.isScrolling, false);
-    
+
     // Update speed display if it has changed
     if (data.currentSpeed) {
       const speedDisplay = document.getElementById("speed-display");
@@ -751,36 +765,36 @@ class TwitterCollectorPopup {
   updateSpeedSelection(speedIndex) {
     this.currentSpeedIndex = speedIndex;
     const speedLevel = this.speedLevels[speedIndex];
-    
+
     // Update display with visual feedback
     const speedDisplay = document.getElementById("speed-display");
     const speedSelector = document.getElementById("speed-selector");
-    
+
     // Add changing effect
     speedDisplay.classList.add("changing");
     speedDisplay.textContent = speedLevel.display;
-    
+
     // Remove changing effect after animation
     setTimeout(() => {
       speedDisplay.classList.remove("changing");
     }, 300);
-    
+
     // Update capture active styling
     if (this.isCapturing) {
       speedSelector.classList.add("capture-active");
     }
-    
+
     // Store preference
     this.saveSpeedPreference(speedIndex);
-    
+
     // Send to content script if auto-scroll is active
     this.updateContentScriptSpeed();
-    
+
     // Show feedback for real-time speed changes
     if (this.isCapturing) {
       this.showToast(`Speed changed to ${speedLevel.display}`, "info");
     }
-    
+
     console.log(`Speed updated to ${speedLevel.display} (index ${speedIndex})`);
   }
 
@@ -798,12 +812,13 @@ class TwitterCollectorPopup {
       if (result.autoScrollSpeedIndex !== undefined) {
         this.currentSpeedIndex = result.autoScrollSpeedIndex;
       }
-      
+
       // Update UI
       const speedSlider = document.getElementById("speed-slider");
       const speedDisplay = document.getElementById("speed-display");
       speedSlider.value = this.currentSpeedIndex;
-      speedDisplay.textContent = this.speedLevels[this.currentSpeedIndex].display;
+      speedDisplay.textContent =
+        this.speedLevels[this.currentSpeedIndex].display;
     } catch (error) {
       console.log("No speed preference found:", error);
     }
@@ -834,6 +849,19 @@ class TwitterCollectorPopup {
     } else {
       speedSelector.classList.remove("visible");
     }
+  }
+
+  // TODO: Add filter-related methods
+  async loadFilterPreference() {
+    // Load saved filter regex from storage
+  }
+
+  validateFilterRegex(regexString) {
+    // Validate regex string and return compiled RegExp or null
+  }
+
+  toggleFilterEnabled(enabled) {
+    // Enable/disable filter input based on auto-scroll state
   }
 }
 
