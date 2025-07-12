@@ -1061,3 +1061,78 @@ body {
     gap: var(--space-1);
   }
 }
+
+/* New Layout Styles for UI Revamp */
+
+/* Stats Row at Top */
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--neutral-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--neutral-200);
+}
+
+.stats-row .stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.stats-row .stat-number {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--neutral-800);
+  margin-bottom: var(--space-1);
+}
+
+.stats-row .stat-label {
+  font-size: 0.75rem;
+  color: var(--neutral-600);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Primary Actions Row */
+.primary-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.primary-actions .action-btn,
+.primary-actions .capture-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+/* Utility Classes */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.collapse {
+  overflow: hidden;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+  font-size: 0.75rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}

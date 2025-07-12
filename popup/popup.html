@@ -25,12 +25,59 @@
 
       <!-- Main Content -->
       <main class="main-content">
-        <!-- TODO: UI Revamp - Replace large context section with badge next to status -->
-        <!-- TODO: UI Revamp - Add stats row at top -->
-        <!-- TODO: UI Revamp - Restructure into primary actions row -->
-        <!-- TODO: UI Revamp - Add collapsible Advanced Settings panel -->
+        <!-- Statistics Row -->
+        <section class="stats-row">
+          <div class="stat-item">
+            <div class="stat-number" id="total-tweets">0</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="bookmarks-count">0</div>
+            <div class="stat-label">Bookmarks</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="profiles-count">0</div>
+            <div class="stat-label">Profiles</div>
+          </div>
+        </section>
 
-        <!-- Page Context Detection -->
+        <!-- Primary Actions Row -->
+        <section class="primary-actions">
+          <button class="action-btn primary" id="view-data-btn">
+            <span class="btn-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                width="16"
+                height="16"
+              >
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+            </span>
+            View Data
+          </button>
+          <button class="capture-btn" id="capture-btn" disabled>
+            <span class="btn-icon" id="btn-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                width="16"
+                height="16"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+            <span class="btn-text" id="btn-text">Start Listening</span>
+          </button>
+        </section>
+
+        <!-- TODO: Advanced Settings Panel will be added next -->
+
+        <!-- Page Context Detection (will be converted to badge) -->
         <div class="context-section">
           <div class="context-header">
             <h3>Page Detection</h3>
@@ -60,53 +107,7 @@
           </div>
         </div>
 
-        <!-- Capture Controls -->
-        <div class="capture-section">
-          <button class="capture-btn" id="capture-btn" disabled>
-            <span class="btn-icon" id="btn-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                width="16"
-                height="16"
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </span>
-            <span class="btn-text" id="btn-text">Start Capture</span>
-          </button>
-
-          <div class="capture-options">
-            <label class="toggle-label">
-              <span class="toggle-text">Auto-scroll</span>
-              <div class="toggle-switch">
-                <input type="checkbox" id="auto-scroll-toggle" />
-                <span class="toggle-slider"></span>
-              </div>
-              <span class="toggle-status" id="auto-scroll-status">OFF</span>
-            </label>
-
-            <div class="speed-selector" id="speed-selector">
-              <label class="speed-label">
-                <span class="speed-text">Speed</span>
-                <div class="speed-control">
-                  <span class="speed-indicator slow">1/4x</span>
-                  <input 
-                    type="range" 
-                    id="speed-slider" 
-                    min="0" 
-                    max="5" 
-                    value="2" 
-                    step="1"
-                    class="speed-slider"
-                  />
-                  <span class="speed-indicator fast">8x</span>
-                </div>
-                <span class="speed-display" id="speed-display">1x (Default)</span>
-              </label>
-            </div>
-          </div>
-        </div>
+        <!-- Auto-scroll options will be moved to Advanced Settings panel -->
 
         <!-- Progress Section -->
         <div
@@ -129,44 +130,11 @@
           </div>
         </div>
 
-        <!-- Statistics -->
-        <div class="stats-section">
-          <h3>Statistics</h3>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <div class="stat-number" id="total-tweets">0</div>
-              <div class="stat-label">Total Tweets</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number" id="bookmarks-count">0</div>
-              <div class="stat-label">Bookmarks</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number" id="profiles-count">0</div>
-              <div class="stat-label">Profiles</div>
-            </div>
-          </div>
-        </div>
+        <!-- Statistics moved to top stats row -->
 
-        <!-- Action Buttons -->
+        <!-- Secondary Actions -->
         <div class="actions-section">
-          <button class="action-btn primary" id="view-data-btn">
-            <span class="btn-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                width="16"
-                height="16"
-              >
-                <line x1="18" y1="20" x2="18" y2="10" />
-                <line x1="12" y1="20" x2="12" y2="4" />
-                <line x1="6" y1="20" x2="6" y2="14" />
-              </svg>
-            </span>
-            View Captured Data
-          </button>
+          <!-- View Data button moved to primary actions row -->
 
           <div class="action-row">
             <button class="action-btn secondary" id="export-btn">
