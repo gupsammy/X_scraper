@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Filtering Tests</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .filter-demo {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #ffe6e6;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        .success {
+            background: #e6ffe6;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .tweet {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .tweet.filtered {
+            background: #e7f3ff;
+            border-color: #007bff;
+        }
+        .stats {
+            font-weight: bold;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Advanced Filtering Tests</h1>
+    <p>Test the advanced filtering functionality that was implemented for the Twitter extension.</p>
+
+    <div class="test-container">
+        <h2>🔧 Interactive Filter Tester</h2>
+        <div class="filter-demo">
+            <label for="filter-input">
+                <strong>Filter Pattern (Regex or Keywords):</strong>
+            </label>
+            <input 
+                type="text" 
+                id="filter-input" 
+                placeholder="Enter regex pattern or keywords..."
+                title="Examples: javascript, \\b(bug|fix)\\b, @\\w+, https://.*\.com"
+            >
+            <button onclick="applyFilter()">Apply Filter</button>
+            <button onclick="clearFilter()">Clear</button>
+            <button onclick="runAutomatedTests()">Run Automated Tests</button>
+        </div>
+        
+        <div id="filter-result" class="result" style="display: none;"></div>
+        
+        <div id="tweet-results">
+            <h3>Sample Tweets:</h3>
+            <div id="tweet-list"></div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>📋 Example Patterns to Try</h2>
+        <ul>
+            <li><code>javascript</code> - Simple keyword search (case-insensitive)</li>
+            <li><code>javascript|typescript</code> - Multiple keywords (OR)</li>
+            <li><code>\\b(bug|issue|fix)\\b</code> - Word boundaries for exact matches</li>
+            <li><code>https://github\\.com</code> - GitHub links</li>
+            <li><code>\\$[A-Z]{1,5}\\b</code> - Stock symbols like $AAPL</li>
+            <li><code>@\\w+</code> - User mentions</li>
+            <li><code>\\b202[3-4]\\b</code> - Years 2023 or 2024</li>
+            <li><code>*invalid</code> - Invalid regex (should show error)</li>
+        </ul>
+    </div>
+
+    <div id="automated-results" class="test-container" style="display: none;">
+        <h2>🤖 Automated Test Results</h2>
+        <div id="test-output"></div>
+    </div>
+
+    <script src="test-filtering.js"></script>
+    <script>
+        // Sample tweets for testing
+        const sampleTweets = [
+            { id: "1", full_text: "Excited about the new JavaScript features in ES2024! #JavaScript" },
+            { id: "2", full_text: "Check out this amazing AI project on GitHub: https://github.com/user/ai-tool" },
+            { id: "3", full_text: "Just bought $AAPL and $GOOGL stocks for my portfolio" },
+            { id: "4", full_text: "Found a critical bug in our production system. Working on a fix now." },
+            { id: "5", full_text: "Meeting with @elonmusk tomorrow to discuss the future of tech" },
+            { id: "6", full_text: "Happy New Year 2024! Looking forward to January developments" },
+            { id: "7", full_text: "TypeScript makes development so much better than plain JavaScript" },
+            { id: "8", full_text: "Regular expression patterns can be tricky but powerful" },
+            { id: "9", full_text: "Building a chrome extension with React and IndexedDB" },
+            { id: "10", full_text: "The issue was resolved by applying the latest security fix" }
+        ];
+
+        // Render initial tweets
+        function renderTweets(tweets = sampleTweets, filteredIds = []) {
+            const tweetList = document.getElementById('tweet-list');
+            tweetList.innerHTML = tweets.map(tweet => 
+                `<div class="tweet ${filteredIds.includes(tweet.id) ? 'filtered' : ''}" data-id="${tweet.id}">
+                    <strong>Tweet ${tweet.id}:</strong> ${tweet.full_text}
+                </div>`
+            ).join('');
+        }
+
+        // Apply filter function
+        function applyFilter() {
+            const filterInput = document.getElementById('filter-input');
+            const resultDiv = document.getElementById('filter-result');
+            const pattern = filterInput.value.trim();
+
+            try {
+                let filteredTweets;
+                
+                if (pattern === "") {
+                    filteredTweets = sampleTweets;
+                } else {
+                    const regex = new RegExp(pattern, "i");
+                    filteredTweets = sampleTweets.filter(tweet => {
+                        const tweetText = tweet.full_text || tweet.text || "";
+                        return regex.test(tweetText);
+                    });
+                }
+
+                const filteredIds = filteredTweets.map(t => t.id);
+                
+                resultDiv.className = 'result success';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <div class="stats">
+                        Filter: "${pattern}" ${pattern === "" ? "(captures all)" : ""}
+                    </div>
+                    <div class="stats">
+                        Results: ${filteredTweets.length}/${sampleTweets.length} tweets matched
+                    </div>
+                    <div>Matched tweets: ${filteredIds.length > 0 ? filteredIds.join(', ') : 'None'}</div>
+                `;
+
+                renderTweets(sampleTweets, filteredIds);
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <strong>Invalid Regex Pattern:</strong> ${error.message}
+                `;
+                renderTweets(sampleTweets, []);
+            }
+        }
+
+        // Clear filter
+        function clearFilter() {
+            document.getElementById('filter-input').value = '';
+            document.getElementById('filter-result').style.display = 'none';
+            renderTweets(sampleTweets, []);
+        }
+
+        // Run automated tests
+        function runAutomatedTests() {
+            const resultsDiv = document.getElementById('automated-results');
+            const outputDiv = document.getElementById('test-output');
+            
+            resultsDiv.style.display = 'block';
+            outputDiv.innerHTML = '<p>Running tests...</p>';
+            
+            // Capture console output
+            const originalLog = console.log;
+            let testOutput = '';
+            
+            console.log = function(...args) {
+                testOutput += args.join(' ') + '\\n';
+                originalLog.apply(console, arguments);
+            };
+            
+            // Run the tests
+            runFilteringTests();
+            
+            // Restore console.log
+            console.log = originalLog;
+            
+            // Display results
+            outputDiv.innerHTML = `<pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">${testOutput}</pre>`;
+        }
+
+        // Initialize
+        renderTweets();
+    </script>
+</body>
+</html>
