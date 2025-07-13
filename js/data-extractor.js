@@ -37,6 +37,15 @@ class TwitterDataExtractor {
         case "searchResults":
           tweets = this.extractFromSearch(data, requestInfo);
           break;
+        case "homeTimeline":
+          tweets = this.extractFromHomeTimeline(data, requestInfo);
+          break;
+        case "homeLatestTimeline":
+          tweets = this.extractFromHomeLatestTimeline(data, requestInfo);
+          break;
+        case "exploreForYou":
+          tweets = this.extractFromExploreForYou(data, requestInfo);
+          break;
         default:
           debugLog(`Unknown source type: ${sourceType}`);
           return [];
@@ -131,6 +140,103 @@ class TwitterDataExtractor {
     }
   }
 
+  // Extract tweets from home timeline API response
+  extractFromHomeTimeline(data, requestInfo) {
+    try {
+      debugLog("Extracting from home timeline response");
+      debugLog("Data structure:", {
+        hasData: !!data.data,
+        hasHome: !!data.data?.home,
+        hasHomeTimelineUrt: !!data.data?.home?.home_timeline_urt,
+        hasInstructions: !!data.data?.home?.home_timeline_urt?.instructions,
+      });
+
+      const instructions =
+        data?.data?.home?.home_timeline_urt?.instructions || [];
+      debugLog(`Found ${instructions.length} instructions`);
+
+      return this.extractFromInstructions(
+        instructions,
+        "hometimeline",
+        requestInfo
+      );
+    } catch (error) {
+      console.error("Error extracting home timeline:", error);
+      debugLog("Home timeline extraction error:", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return [];
+    }
+  }
+
+  // Extract tweets from home latest timeline API response
+  extractFromHomeLatestTimeline(data, requestInfo) {
+    try {
+      debugLog("Extracting from home latest timeline response");
+      debugLog("Data structure:", {
+        hasData: !!data.data,
+        hasHome: !!data.data?.home,
+        hasHomeTimelineUrt: !!data.data?.home?.home_timeline_urt,
+        hasInstructions: !!data.data?.home?.home_timeline_urt?.instructions,
+      });
+
+      const instructions =
+        data?.data?.home?.home_timeline_urt?.instructions || [];
+      debugLog(`Found ${instructions.length} instructions`);
+
+      return this.extractFromInstructions(
+        instructions,
+        "homelatesttimeline",
+        requestInfo
+      );
+    } catch (error) {
+      console.error("Error extracting home latest timeline:", error);
+      debugLog("Home latest timeline extraction error:", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return [];
+    }
+  }
+
+  // Extract tweets from explore for you API response
+  extractFromExploreForYou(data, requestInfo) {
+    try {
+      debugLog("Extracting from explore for you response");
+      debugLog("Data structure:", {
+        hasData: !!data.data,
+        hasExplorePage: !!data.data?.explore_page,
+        hasBody: !!data.data?.explore_page?.body,
+        hasInitialTimeline: !!data.data?.explore_page?.body?.initialTimeline,
+        hasTimeline: !!data.data?.explore_page?.body?.initialTimeline?.timeline,
+        hasTimelineTimeline:
+          !!data.data?.explore_page?.body?.initialTimeline?.timeline?.timeline,
+        hasInstructions:
+          !!data.data?.explore_page?.body?.initialTimeline?.timeline?.timeline
+            ?.instructions,
+      });
+
+      const instructions =
+        data?.data?.explore_page?.body?.initialTimeline?.timeline?.timeline
+          ?.instructions || [];
+      debugLog(`Found ${instructions.length} instructions`);
+
+      return this.extractFromInstructions(
+        instructions,
+        "exploreforyou",
+        requestInfo
+      );
+    } catch (error) {
+      console.error("Error extracting explore for you:", error);
+      debugLog("Explore for you extraction error:", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return [];
+    }
+  }
+
   // Generic method to extract tweets from timeline instructions
   extractFromInstructions(instructions, sourceCategory, requestInfo) {
     debugLog(
@@ -158,14 +264,14 @@ class TwitterDataExtractor {
             debugLog(`Processing TimelineTimelineModule: ${entry.entryId}`);
             const moduleItems = entry.content?.items || [];
             debugLog(`Module has ${moduleItems.length} items`);
-            
+
             for (const moduleItem of moduleItems) {
               debugLog(`Processing module item: ${moduleItem.entryId}`, {
                 itemType: moduleItem.item?.itemContent?.itemType,
                 hasTweetResults: !!moduleItem.item?.itemContent?.tweet_results,
                 dispensable: moduleItem.dispensable,
               });
-              
+
               // Only process TimelineTweet items within modules
               if (moduleItem.item?.itemContent?.itemType === "TimelineTweet") {
                 // Create a synthetic entry structure for extractTweetFromEntry
@@ -174,10 +280,10 @@ class TwitterDataExtractor {
                   content: {
                     entryType: "TimelineTimelineItem",
                     __typename: "TimelineTimelineItem",
-                    itemContent: moduleItem.item.itemContent
-                  }
+                    itemContent: moduleItem.item.itemContent,
+                  },
                 };
-                
+
                 const tweet = this.extractTweetFromEntry(
                   syntheticEntry,
                   sourceCategory,
@@ -186,15 +292,24 @@ class TwitterDataExtractor {
                 if (tweet) {
                   // Mark if this tweet was dispensable (part of conversation thread)
                   tweet.is_dispensable = moduleItem.dispensable || false;
-                  tweet.module_type = entry.entryId.includes('profile-conversation') ? 'conversation' : 
-                                     entry.entryId.includes('who-to-follow') ? 'recommendation' : 'module';
+                  tweet.module_type = entry.entryId.includes(
+                    "profile-conversation"
+                  )
+                    ? "conversation"
+                    : entry.entryId.includes("who-to-follow")
+                    ? "recommendation"
+                    : "module";
                   debugLog(`Successfully extracted module tweet: ${tweet.id}`);
                   tweets.push(tweet);
                 } else {
-                  debugLog(`Failed to extract tweet from module item: ${moduleItem.entryId}`);
+                  debugLog(
+                    `Failed to extract tweet from module item: ${moduleItem.entryId}`
+                  );
                 }
               } else {
-                debugLog(`Skipping non-tweet module item: ${moduleItem.entryId} (type: ${moduleItem.item?.itemContent?.itemType})`);
+                debugLog(
+                  `Skipping non-tweet module item: ${moduleItem.entryId} (type: ${moduleItem.item?.itemContent?.itemType})`
+                );
               }
             }
           } else {

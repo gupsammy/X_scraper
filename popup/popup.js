@@ -243,8 +243,38 @@ class TwitterCollectorPopup {
       };
     }
 
+    // Check for home timeline pages
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+
+    if (pathname === "/home" || pathname.startsWith("/home/")) {
+      return {
+        type: "homeTimeline",
+        displayName: "Home Timeline",
+        description: "Ready to capture home timeline (For You/Following)",
+      };
+    }
+
+    // Check for explore for you page
+    if (pathname === "/explore" || pathname.startsWith("/explore/")) {
+      // Check if it's the for you tab
+      if (pathname.includes("/for_you") || pathname === "/explore") {
+        return {
+          type: "exploreForYou",
+          displayName: "Explore For You",
+          description: "Ready to capture explore for you",
+        };
+      }
+      // General explore page
+      return {
+        type: "explore",
+        displayName: "Explore Page",
+        description: "Navigate to For You tab to capture",
+      };
+    }
+
     // Simple user profile detection
-    const pathMatch = new URL(url).pathname.match(/^\/([^\/]+)$/);
+    const pathMatch = pathname.match(/^\/([^\/]+)$/);
     if (pathMatch) {
       return {
         type: "usertweets",
@@ -256,7 +286,7 @@ class TwitterCollectorPopup {
     return {
       type: "unknown",
       displayName: "Twitter Page",
-      description: "Navigate to bookmarks or profile page",
+      description: "Navigate to home, explore, bookmarks, or profile page",
     };
   }
 
@@ -275,12 +305,15 @@ class TwitterCollectorPopup {
       bookmarks: "🔖",
       usertweets: "👤",
       search: "🔍",
+      homeTimeline: "🏠",
+      exploreForYou: "🔍",
+      explore: "🧭",
       unknown: "❓",
     };
     badgeIcon.textContent = icons[context.type] || "❓";
 
     // Enable/disable capture button based on context
-    const canCapture = context.type !== "unknown";
+    const canCapture = context.type !== "unknown" && context.type !== "explore";
     captureBtn.disabled = !canCapture;
 
     if (canCapture) {
@@ -468,6 +501,21 @@ class TwitterCollectorPopup {
       this.updateCaptureButton();
       this.hideProgressSection();
       this.stopUpdateInterval();
+
+      // Clear auto-scroll preference and reset related UI controls
+      try {
+        await chrome.storage.local.remove([
+          "autoScrollEnabled",
+          "autoScrollPageContext",
+        ]);
+      } catch (e) {
+        console.warn("Failed to clear autoScroll preference", e);
+      }
+
+      // Reset UI toggles to default (auto-scroll OFF, filter enabled, speed selector hidden)
+      this.resetAutoScrollToggle();
+      this.toggleSpeedSelectorVisibility(false);
+      this.toggleFilterEnabled(true);
 
       this.showToast("Capture stopped", "success");
     } catch (error) {

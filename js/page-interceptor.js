@@ -9,6 +9,8 @@
     userTweets: /\/i\/api\/graphql\/[^\/]+\/UserTweets/i,
     searchResults: /\/i\/api\/graphql\/[^\/]+\/SearchTimeline/i,
     homeTimeline: /\/i\/api\/graphql\/[^\/]+\/HomeTimeline/i,
+    homeLatestTimeline: /\/i\/api\/graphql\/[^\/]+\/HomeLatestTimeline/i,
+    exploreForYou: /\/i\/api\/graphql\/[^\/]+\/ExplorePage/i,
   };
 
   function matchApi(url) {

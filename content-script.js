@@ -567,6 +567,16 @@ class TwitterCollectorContentScript {
         sessionId: this.currentSession,
       });
 
+      // Clear any persisted auto-scroll preference for next session
+      try {
+        await chrome.storage.local.remove([
+          "autoScrollEnabled",
+          "autoScrollPageContext",
+        ]);
+      } catch (e) {
+        debugLog("Failed to clear autoScroll preference", e);
+      }
+
       // Clear any persisted filter so the next session starts fresh
       try {
         await chrome.storage.local.remove("activeFilterForCapture");

@@ -33,6 +33,33 @@ function detectPageContext() {
     };
   }
 
+  // Check for home timeline pages
+  if (pathname === "/home" || pathname.startsWith("/home/")) {
+    return {
+      type: "homeTimeline",
+      displayName: "Home Timeline",
+      description: "Ready to capture home timeline (For You/Following)",
+    };
+  }
+
+  // Check for explore for you page
+  if (pathname === "/explore" || pathname.startsWith("/explore/")) {
+    // Check if it's the for you tab
+    if (pathname.includes("/for_you") || pathname === "/explore") {
+      return {
+        type: "exploreForYou",
+        displayName: "Explore For You",
+        description: "Ready to capture explore for you",
+      };
+    }
+    // General explore page
+    return {
+      type: "explore",
+      displayName: "Explore Page",
+      description: "Navigate to For You tab to capture",
+    };
+  }
+
   // Check for user profile (e.g., /username or /username/ but not /username/status/xxx)
   // Allow optional trailing slash which previous regex failed to match
   const userProfileMatch = pathname.match(/^\/([^\/]+)\/?$/);
@@ -53,7 +80,7 @@ function detectPageContext() {
   return {
     type: "unknown",
     displayName: "Unsupported Page",
-    description: "Navigate to Bookmarks, Profile, or Search",
+    description: "Navigate to Home, Explore, Bookmarks, Profile, or Search",
   };
 }
 
@@ -113,6 +140,8 @@ function matchesAPIPattern(url) {
     userTweets: /\/i\/api\/graphql\/[^\/]+\/UserTweets/i,
     searchResults: /\/i\/api\/graphql\/[^\/]+\/SearchTimeline/i,
     homeTimeline: /\/i\/api\/graphql\/[^\/]+\/HomeTimeline/i,
+    homeLatestTimeline: /\/i\/api\/graphql\/[^\/]+\/HomeLatestTimeline/i,
+    exploreForYou: /\/i\/api\/graphql\/[^\/]+\/ExplorePage/i,
   };
 
   for (const [apiType, pattern] of Object.entries(API_PATTERNS)) {
